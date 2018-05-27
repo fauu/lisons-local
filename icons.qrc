@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>assets/icons/check.png</file>
-        <file>assets/icons/close.png</file>
-        <file>assets/icons/exclamation.png</file>
-        <file>assets/icons/loading.png</file>
-    </qresource>
-</RCC>

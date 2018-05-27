@@ -1,4 +1,5 @@
 import QtQuick 2.9
+import "Style.js" as Style
 
 Row {
     property alias textContent: text.text
@@ -13,8 +14,9 @@ Row {
         id: text
         anchors.verticalCenter: parent.verticalCenter
         textFormat: Text.RichText
-        font.family: "Lato"
+        font.family: Style.font
         font.weight: Font.Bold
+        color: Style.colors.primary;
         onLinkActivated: Qt.openUrlExternally(link)
     }
 }

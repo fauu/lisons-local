@@ -1,11 +1,12 @@
 import QtQuick 2.9
 import QtGraphicalEffects 1.0
+import "Style.js" as Style
 
 Rectangle {
     id: logoRect
     width: logoTextMetrics.width + 5
     height: logoTextMetrics.height - 8
-    radius: 3
+    radius: Style.sizes.borderRadius
 
     LinearGradient {
         anchors.fill: parent
@@ -15,18 +16,18 @@ Rectangle {
         gradient: Gradient {
             GradientStop {
               position: 0
-              color: "#ff9a8b"
+              color: Style.colors.accentAlt
             }
             GradientStop {
               position: 1
-              color: "#ff6a88"
+              color: Style.colors.accent
             }
         }
     }
 
     TextMetrics {
         id: logoTextMetrics
-        font.family: "Lato"
+        font.family: Style.font
         font.weight: Font.Bold
         font.pixelSize: 64
         font.letterSpacing: -3
@@ -40,6 +41,6 @@ Rectangle {
         anchors.horizontalCenterOffset: -1
         font: logoTextMetrics.font
         text: logoTextMetrics.text
-        color: "#f9f9f9"
+        color: Style.colors.secondary
     }
 }

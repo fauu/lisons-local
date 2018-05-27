@@ -1,10 +1,10 @@
 import QtQuick 2.9
 import QtQuick.Window 2.2
 import QtQuick.Layouts 1.2
-//    anchors.horizontalCenter: parent.horizontalCenter
+import "Style.js" as Style
 
 Window {
-    readonly property int windowMargins: 15
+    readonly property int windowMargin: 20
     readonly property int layoutSpacing: 10
     readonly property int logoBottomMargin: 20
     readonly property int messageContainerHeight: 20
@@ -12,16 +12,16 @@ Window {
     visible: true
     title: "Lisons! Local"
     width: 500
-    height: 2 * windowMargins
+    height: 2 * windowMargin
             + logo.height
             + logoBottomMargin
             + 2 * layoutSpacing
             + 2 * messageContainerHeight
-    color: "#f9f9f9"
+    color: Style.colors.secondary
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: windowMargins
+        anchors.margins: windowMargin
         spacing: layoutSpacing
 
         Logo {
@@ -42,22 +42,22 @@ Window {
             Message {
                 visible: backend.downloadManagerState == 1
                 indicator: loadingIndicator
-                textContent: "Downloading Lisons"
+                textContent: "Downloading Lisons!"
             }
             Message {
                 visible: backend.downloadManagerState == 2
                 indicator: successIndicator
-                textContent: "Lisons is up to date"
+                textContent: "Lisons! is up to date"
             }
             Message {
                 visible: backend.downloadManagerState == 3
                 indicator: warningIndicator
-                textContent: "Could not update Lisons – you may be running an outdated version"
+                textContent: "Could not update Lisons!"
             }
             Message {
                 visible: backend.downloadManagerState == 4
                 indicator: failureIndicator
-                textContent: "Could not download Lisons"
+                textContent: "Could not download Lisons!"
             }
         }
 
@@ -68,7 +68,8 @@ Window {
             Message {
                 visible: backend.serverState == 1
                 indicator: successIndicator
-                textContent: "<style>a:link { color: #ff6a88; }</style>Server is running at <a href='http://localhost:8080'>http://localhost:8080</a>"
+                textContent: "<style>a:link { color: " + Style.colors.accent + "; }</style>
+                    Server is running at <a href='http://localhost:8080'>http://localhost:8080</a>"
             }
             Message {
                 visible: backend.serverState == 2
@@ -91,7 +92,7 @@ Window {
     Component {
         id: successIndicator
         Indicator {
-            color: "#8cc06e"
+            color: Style.colors.success
             icon: "check"
         }
     }
@@ -99,7 +100,7 @@ Window {
     Component {
         id: warningIndicator
         Indicator {
-            color: "#eab73e"
+            color: Style.colors.warning
             icon: "exclamation"
         }
     }
@@ -107,7 +108,7 @@ Window {
     Component {
         id: failureIndicator
         Indicator {
-            color: "#df746a"
+            color: Style.colors.failure
             icon: "close"
         }
     }

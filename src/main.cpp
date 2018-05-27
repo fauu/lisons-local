@@ -13,7 +13,6 @@ main(int argc, char* argv[])
 
   QGuiApplication app(argc, argv);
 
-  QFontDatabase::addApplicationFont(":/assets/fonts/Lato-Regular.ttf");
   QFontDatabase::addApplicationFont(":/assets/fonts/Lato-Bold.ttf");
 
   QQmlApplicationEngine engine;
@@ -22,7 +21,7 @@ main(int argc, char* argv[])
   backend.init();
   engine.rootContext()->setContextProperty("backend", &backend);
 
-  engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+  engine.load(QUrl(QStringLiteral("qrc:/res/main.qml")));
   if (engine.rootObjects().isEmpty()) {
     return -1;
   }

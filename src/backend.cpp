@@ -77,7 +77,6 @@ Backend::downloadManagerStateChanged(DownloadManagerState newState)
 void
 Backend::serverStarted()
 {
-  qDebug() << "BACKEND: SERVER STARTED ";
   setExposedServerState(ServerState::Started);
 }
 

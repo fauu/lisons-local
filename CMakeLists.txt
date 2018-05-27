@@ -11,7 +11,7 @@ set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ";" ${QT5_PACKAGE_DIR})
 
 find_package(Qt5 COMPONENTS Core Quick REQUIRED)
 
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
 
 set(SOURCES
     lib/hobrasofthttp/httpconnection.cpp
@@ -58,16 +58,15 @@ set(HEADERS
 
 #qt5_add_resources(qml_QRC qml.qrc)
 
-file(GLOB sources
-        "lib/hobrasofthttp/*.h"
-        "lib/hobrasofthttp/*.cpp"
-        "src/*.h"
-        "src/*.cpp"
-        "qml.qrc"
-        "icons.qrc"
-)
+#file(GLOB sources
+#        "lib/hobrasofthttp/*.h"
+#        "lib/hobrasofthttp/*.cpp"
+#        "src/*.h"
+#        "src/*.cpp"
+#        "qml.qrc"
+#)
 
-add_executable(${PROJECT_NAME} ${sources})
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} qml.qrc)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Quick)
 
