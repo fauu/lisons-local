@@ -23,7 +23,7 @@ class DownloadManager : public QObject
 {
   Q_OBJECT
 public:
-  explicit DownloadManager(QObject* parent = nullptr);
+  DownloadManager(QObject* parent, const QString& savePath);
   void start();
 
 signals:

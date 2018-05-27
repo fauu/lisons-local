@@ -1,19 +1,17 @@
 #include "download_manager.h"
 #include "file_md5.h"
 
-static const char* const BASE_URL =
-  "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
-static const char* const DOWNLOAD_DIR_NAME = "web";
+#include <QStandardPaths>
+
+static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
 static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 static const char* const NEW_FILE_SUFFIX = ".new";
 
-DownloadManager::DownloadManager(QObject* parent)
+DownloadManager::DownloadManager(QObject* parent, const QString& savePath)
   : QObject(parent)
-  , mDownloadDir(QLatin1String(DOWNLOAD_DIR_NAME))
-  , mNewManifestFileName(QLatin1String(MANIFEST_FILE_NAME) +
-                         QLatin1String(NEW_FILE_SUFFIX))
-{
-}
+  , mDownloadDir(savePath)
+  , mNewManifestFileName(QLatin1String(MANIFEST_FILE_NAME) + QLatin1String(NEW_FILE_SUFFIX))
+{}
 
 void
 DownloadManager::start()
@@ -21,8 +19,8 @@ DownloadManager::start()
   if (!mDownloadDir.exists()) {
     mDownloadDir.mkpath(".");
   }
-  enqueue(QLatin1String(MANIFEST_FILE_NAME));
-  QTimer::singleShot(0, this, &DownloadManager::startNextDownload);
+    enqueue(QLatin1String(MANIFEST_FILE_NAME));
+    QTimer::singleShot(0, this, &DownloadManager::startNextDownload);
   emit stateChanged(DownloadManagerState::DownloadingManifest);
 }
 
@@ -57,8 +55,7 @@ DownloadManager::readManifest(QFile& file)
 bool
 DownloadManager::verifyPackage(bool newOne)
 {
-  QString manifestPath =
-    mDownloadDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
+  QString manifestPath = mDownloadDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
   if (newOne) {
     manifestPath += NEW_FILE_SUFFIX;
   }
@@ -84,8 +81,7 @@ DownloadManager::verifyPackage(bool newOne)
 void
 DownloadManager::deleteNewPackage()
 {
-  mDownloadDir.setNameFilters(QStringList()
-                              << "*" + QLatin1String(NEW_FILE_SUFFIX));
+  mDownloadDir.setNameFilters(QStringList() << "*" + QLatin1String(NEW_FILE_SUFFIX));
   mDownloadDir.setFilter(QDir::Files);
   for (const auto& dirFile : mDownloadDir.entryList()) {
     mDownloadDir.remove(dirFile);
@@ -102,8 +98,7 @@ DownloadManager::overwritePackage()
     if (QFile::exists(entryFilePath)) {
       QFile::remove(entryFilePath);
     }
-    QFile::rename(entryFilePath + QLatin1String(NEW_FILE_SUFFIX),
-                  entryFilePath);
+    QFile::rename(entryFilePath + QLatin1String(NEW_FILE_SUFFIX), entryFilePath);
   }
 }
 
@@ -130,13 +125,11 @@ DownloadManager::startNextDownload()
   }
 
   QUrl url = mDownloadQueue.dequeue();
-  QString fileName =
-    QFileInfo(url.path()).fileName() + QLatin1String(NEW_FILE_SUFFIX);
+  QString fileName = QFileInfo(url.path()).fileName() + QLatin1String(NEW_FILE_SUFFIX);
   QString savePath = mDownloadDir.absoluteFilePath(fileName);
   mOutputFile.setFileName(savePath);
   if (!mOutputFile.open(QIODevice::ReadWrite)) {
-    qWarning() << "Could not open '" << savePath
-               << "' for writing: " << mOutputFile.errorString();
+    qWarning() << "Could not open '" << savePath << "' for writing: " << mOutputFile.errorString();
     if (verifyPackage()) {
       emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
     } else {
@@ -149,14 +142,8 @@ DownloadManager::startNextDownload()
 
   QNetworkRequest request(url);
   mCurrentDownload = mNetworkAccessManager.get(request);
-  connect(mCurrentDownload,
-          &QNetworkReply::finished,
-          this,
-          &DownloadManager::downloadFinished);
-  connect(mCurrentDownload,
-          &QNetworkReply::readyRead,
-          this,
-          &DownloadManager::downloadReadyRead);
+  connect(mCurrentDownload, &QNetworkReply::finished, this, &DownloadManager::downloadFinished);
+  connect(mCurrentDownload, &QNetworkReply::readyRead, this, &DownloadManager::downloadReadyRead);
 
   qDebug() << "Downloading" << url.toEncoded().constData();
 }
@@ -179,8 +166,7 @@ DownloadManager::downloadFinished()
       if (!mNewManifest) {
         // TODO: DRY startNextDownload()
         if (verifyPackage()) {
-          emit stateChanged(
-            DownloadManagerState::CouldNotUpdateButPackageValid);
+          emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
         } else {
           emit stateChanged(DownloadManagerState::PackageInvalid);
         }

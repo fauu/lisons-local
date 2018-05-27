@@ -7,13 +7,19 @@
 #include <QDebug>
 #include <QtCore>
 
+static QString const APP_DATA_PATH =
+  QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation)
+  + "/lisons-local";
+
 Backend::Backend(QObject* parent)
   : QObject(parent)
+  , mDownloadManager(this, APP_DATA_PATH)
 {}
 
 void
 Backend::init()
 {
+  qDebug() << "APP_DATA_PATH =" << APP_DATA_PATH;
   connect(
     &mDownloadManager, &DownloadManager::stateChanged, this, &Backend::downloadManagerStateChanged);
   mDownloadManager.start();
@@ -53,7 +59,7 @@ void
 Backend::launchServer()
 {
   HobrasoftHttpd::HttpSettings serverSettings(this);
-  serverSettings.setDocroot("./web/");
+  serverSettings.setDocroot(APP_DATA_PATH);
   mServer = new HobrasoftHttpd::HttpServer(&serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);
@@ -68,8 +74,7 @@ Backend::downloadManagerStateChanged(DownloadManagerState newState)
     case DownloadManagerState::CouldNotUpdateButPackageValid:
       launchServer();
       break;
-    default:
-      ; // Skip
+    default:; // Skip
   }
   setExposedDownloadManagerState(newState);
 }

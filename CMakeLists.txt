@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(lisons_local)
+project(lisons-local)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
