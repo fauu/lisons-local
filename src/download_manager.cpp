@@ -10,8 +10,12 @@ static const char* const NEW_FILE_SUFFIX = ".new";
 DownloadManager::DownloadManager(QObject* parent, const QString& savePath)
   : QObject(parent)
   , mDownloadDir(savePath)
+  , mManifestPath(mDownloadDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)))
   , mNewManifestFileName(QLatin1String(MANIFEST_FILE_NAME) + QLatin1String(NEW_FILE_SUFFIX))
-{}
+{
+  QFile manifestFile(mManifestPath);
+  mManifest = readManifest(manifestFile);
+}
 
 void
 DownloadManager::start()
@@ -31,13 +35,14 @@ DownloadManager::enqueue(const QString& fileName)
   mDownloadQueue.enqueue(url);
 }
 
-std::unique_ptr<QVector<ManifestEntry>>
+std::unique_ptr<Manifest>
 DownloadManager::readManifest(QFile& file)
 {
-  auto manifest = std::make_unique<QVector<ManifestEntry>>();
+  auto manifest = std::make_unique<Manifest>();
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
     return nullptr;
   }
+  manifest->md5 = fileMd5(file);
   file.seek(0);
   QTextStream in(&file);
   while (!in.atEnd()) {
@@ -46,25 +51,21 @@ DownloadManager::readManifest(QFile& file)
     if (fields.size() != 2) {
       return nullptr;
     }
-    manifest->push_back({ fields[0], fields[1] });
+    manifest->entries.push_back({ fields[0], fields[1] });
   }
-  return manifest->empty() ? nullptr : std::move(manifest);
+  return manifest->entries.empty() ? nullptr : std::move(manifest);
 }
 
 // TODO: Make options an enum? Check if two-element enums are "recommended"
 bool
 DownloadManager::verifyPackage(bool newOne)
 {
-  QString manifestPath = mDownloadDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
-  if (newOne) {
-    manifestPath += NEW_FILE_SUFFIX;
-  }
-  QFile manifestFile(manifestPath);
-  auto manifest = readManifest(manifestFile);
-  if (!manifest) {
+  // TODO: TODON'T
+  Manifest* manifest = (newOne ? mNewManifest : mManifest).get();
+  if (!manifest || manifest->entries.isEmpty()) {
     return false;
   }
-  for (const auto& entry : *manifest) {
+  for (const auto& entry : manifest->entries) {
     QString entryFilePath = mDownloadDir.absoluteFilePath(entry.fileName);
     if (newOne) {
       entryFilePath += NEW_FILE_SUFFIX;
@@ -72,6 +73,7 @@ DownloadManager::verifyPackage(bool newOne)
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
+      delete manifest;
       return false;
     }
   }
@@ -92,8 +94,8 @@ void
 DownloadManager::overwritePackage()
 {
   // TODO: Error handling?
-  mNewManifest->push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
-  for (const auto& entry : *mNewManifest) {
+  mNewManifest->entries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
+  for (const auto& entry : mNewManifest->entries) {
     QString entryFilePath = mDownloadDir.absoluteFilePath(entry.fileName);
     if (QFile::exists(entryFilePath)) {
       QFile::remove(entryFilePath);
@@ -153,7 +155,11 @@ DownloadManager::downloadFinished()
 {
   if (mCurrentDownload->error()) {
     qDebug() << "File download failed";
-    // emit DownloadFailed
+    if (verifyPackage()) {
+      emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
+    } else {
+      emit stateChanged(DownloadManagerState::PackageInvalid);
+    }
     mCurrentDownload->deleteLater();
     mOutputFile.remove();
   } else {
@@ -172,11 +178,15 @@ DownloadManager::downloadFinished()
         }
         deleteNewPackage();
       } else {
-        // Don't download if manifest unchanged and package valid
-        for (const auto& entry : *mNewManifest) {
-          enqueue(entry.fileName);
+        // BUG: md5s are different somehow?
+        if (mManifest && mNewManifest->md5 == mManifest->md5 && verifyPackage()) {
+          emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
+        } else {
+          for (const auto& entry : mNewManifest->entries) {
+            enqueue(entry.fileName);
+          }
+          emit stateChanged(DownloadManagerState::DownloadingLisons);
         }
-        emit stateChanged(DownloadManagerState::DownloadingLisons);
       }
     }
 

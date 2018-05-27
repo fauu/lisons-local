@@ -10,6 +10,13 @@ struct ManifestEntry
   QString fileName;
 };
 
+// TODO: Make it a class?
+struct Manifest
+{
+  QByteArray md5;
+  QVector<ManifestEntry> entries;
+};
+
 enum DownloadManagerState
 {
   DownloadingManifest,
@@ -32,8 +39,7 @@ signals:
 
 private:
   void enqueue(const QString& fileName);
-  void processManifestReply(QNetworkReply* manifestReply); // TODO: remove?
-  std::unique_ptr<QVector<ManifestEntry>> readManifest(QFile& file);
+  std::unique_ptr<Manifest> readManifest(QFile& file);
   bool verifyPackage(bool newOne = false);
   void deleteNewPackage();
   void overwritePackage();
@@ -45,12 +51,14 @@ private slots:
 
 private:
   QDir mDownloadDir;
+  QString mManifestPath;
   QString mNewManifestFileName;
   QNetworkAccessManager mNetworkAccessManager;
   QQueue<QUrl> mDownloadQueue;
   QNetworkReply* mCurrentDownload = nullptr;
   QFile mOutputFile;
-  std::unique_ptr<QVector<ManifestEntry>> mNewManifest;
+  std::unique_ptr<Manifest> mManifest;
+  std::unique_ptr<Manifest> mNewManifest;
 };
 
 #endif // LISONS_LOCAL_DOWNLOAD_MANAGER_H

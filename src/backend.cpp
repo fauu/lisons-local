@@ -14,7 +14,8 @@ static QString const APP_DATA_PATH =
 Backend::Backend(QObject* parent)
   : QObject(parent)
   , mDownloadManager(this, APP_DATA_PATH)
-{}
+{
+}
 
 void
 Backend::init()
