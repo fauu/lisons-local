@@ -186,6 +186,7 @@ DownloadManager::downloadFinished()
         }
         deleteNewPackage();
       } else {
+        // Don't download if manifest unchanged and package valid
         for (const auto& entry : *mNewManifest) {
           enqueue(entry.fileName);
         }

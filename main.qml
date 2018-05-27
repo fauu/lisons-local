@@ -1,84 +1,114 @@
 import QtQuick 2.9
 import QtQuick.Window 2.2
+import QtQuick.Layouts 1.2
+//    anchors.horizontalCenter: parent.horizontalCenter
 
 Window {
+    readonly property int windowMargins: 15
+    readonly property int layoutSpacing: 10
+    readonly property int logoBottomMargin: 20
+    readonly property int messageContainerHeight: 20
+
     visible: true
-    title: "Lisons! Standalone"
+    title: "Lisons! Local"
     width: 500
-    height: 300
+    height: 2 * windowMargins
+            + logo.height
+            + logoBottomMargin
+            + 2 * layoutSpacing
+            + 2 * messageContainerHeight
     color: "#f9f9f9"
 
-    Logo {
-        id: logo
-        y: 15
-        anchors.horizontalCenter: parent.horizontalCenter
-    }
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: windowMargins
+        spacing: layoutSpacing
 
-    Text {
-        id: text1
-        x: 239
-        y: 182
-        text: backend.downloadManagerState
-        font.pixelSize: 18
-        color: "#282828"
-    }
+        Logo {
+            id: logo
+            anchors.horizontalCenter: parent.horizontalCenter
+            Layout.bottomMargin: logoBottomMargin
+        }
 
-    Row {
-        anchors.top: logo.bottom
-        anchors.topMargin: 40
-        anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 8
-
-        Rectangle {
-            width: iconImage.width
-            height: iconImage.height
-            radius: 3
-            color: "#88d15e"
-            Image {
-                id: iconImage
-                anchors.verticalCenter: parent.verticalCenter
-                source: "assets/icons/check.png"
+        Item {
+            id: downloadManagerStateMessageContainer
+            width: parent.width
+            height: messageContainerHeight
+            Message {
+                visible: backend.downloadManagerState == 0
+                indicator: loadingIndicator
+                textContent: "Downloading manifest file"
+            }
+            Message {
+                visible: backend.downloadManagerState == 1
+                indicator: loadingIndicator
+                textContent: "Downloading Lisons"
+            }
+            Message {
+                visible: backend.downloadManagerState == 2
+                indicator: successIndicator
+                textContent: "Lisons is up to date"
+            }
+            Message {
+                visible: backend.downloadManagerState == 3
+                indicator: warningIndicator
+                textContent: "Could not update Lisons – you may be running an outdated version"
+            }
+            Message {
+                visible: backend.downloadManagerState == 4
+                indicator: failureIndicator
+                textContent: "Could not download Lisons"
             }
         }
 
-        Rectangle {
-            width: iconImage2.width
-            height: iconImage2.height
-            radius: 3
-            color: "#ffb300"
-            Image {
-                id: iconImage2
-                anchors.verticalCenter: parent.verticalCenter
-                source: "assets/icons/exclamation.png"
+        Item {
+            id: serverStateMessageContainer
+            width: parent.width
+            height: messageContainerHeight
+            Message {
+                visible: backend.serverState == 1
+                indicator: successIndicator
+                textContent: "<style>a:link { color: #ff6a88; }</style>Server is running at <a href='http://localhost:8080'>http://localhost:8080</a>"
             }
-        }
-
-        Rectangle {
-            width: iconImage3.width
-            height: iconImage3.height
-            radius: 3
-            color: "#ff5a4b"
-            Image {
-                id: iconImage3
-                anchors.verticalCenter: parent.verticalCenter
-                source: "assets/icons/close.png"
+            Message {
+                visible: backend.serverState == 2
+                indicator: failureIndicator
+                textContent: "Could not start the server"
             }
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Server is running at <a href='http://localhost:8080'>http://localhost:8080</a>"
-            font.family: "Lato"
-            font.weight: Font.Bold
         }
     }
 
-    Text {
-        id: text2
-        x: 239
-        y: 222
-        text: backend.serverState
-        font.pixelSize: 18
-        color: "#282828"
+
+    Component {
+        id: loadingIndicator
+        Indicator {
+            color: "transparent"
+            icon: "loading"
+            spinning: true
+        }
+    }
+
+    Component {
+        id: successIndicator
+        Indicator {
+            color: "#8cc06e"
+            icon: "check"
+        }
+    }
+
+    Component {
+        id: warningIndicator
+        Indicator {
+            color: "#eab73e"
+            icon: "exclamation"
+        }
+    }
+
+    Component {
+        id: failureIndicator
+        Indicator {
+            color: "#df746a"
+            icon: "close"
+        }
     }
 }

@@ -14,9 +14,9 @@ Backend::Backend(QObject* parent)
 void
 Backend::init()
 {
-  mDownloadManager.start();
   connect(
     &mDownloadManager, &DownloadManager::stateChanged, this, &Backend::downloadManagerStateChanged);
+  mDownloadManager.start();
 }
 
 short
@@ -69,7 +69,7 @@ Backend::downloadManagerStateChanged(DownloadManagerState newState)
       launchServer();
       break;
     default:
-      ;
+      ; // Skip
   }
   setExposedDownloadManagerState(newState);
 }

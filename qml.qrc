@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>Logo.qml</file>
+        <file>Indicator.qml</file>
+        <file>Message.qml</file>
     </qresource>
 </RCC>

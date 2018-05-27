@@ -56,7 +56,7 @@ set(HEADERS
 
 # include_directories(${QtQml_INCLUDE_DIRS})
 
-# qt5_add_resources(qml_QRC qml.qrc)
+#qt5_add_resources(qml_QRC qml.qrc)
 
 file(GLOB sources
         "lib/hobrasofthttp/*.h"
@@ -64,6 +64,7 @@ file(GLOB sources
         "src/*.h"
         "src/*.cpp"
         "qml.qrc"
+        "icons.qrc"
 )
 
 add_executable(${PROJECT_NAME} ${sources})
