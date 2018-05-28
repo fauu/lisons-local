@@ -4,8 +4,10 @@
 
 #include <QStandardPaths>
 
+// FIXME: We're needlessly redownloading the whole dist again
+
 static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
-static const char* const MANIFEST_FILE_NAME = "manifest.txt"; // TODO: Move to dist_manifest
+static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 static const char* const NEW_FILE_SUFFIX = ".new";
 
 DistManager::DistManager(QObject* parent, const QDir& saveDir)
@@ -44,7 +46,8 @@ DistManager::verifyDist(std::unique_ptr<DistManifest> const& DistManifest)
   }
 
   for (const DistManifest::Entry& entry : DistManifest->entries) {
-    QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName) + DistManifest->fileNameSuffix;
+    QString entryFilePath =
+      mDistDir.absoluteFilePath(entry.fileName) + DistManifest->fileNameSuffix;
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
@@ -74,14 +77,13 @@ DistManager::overwriteCurrDist()
     return false;
   }
 
+  // Add the new manifest itself as an entry so that we overwrite the old one with it as well
   mNewDistManifest->entries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
   for (const DistManifest::Entry& entry : mNewDistManifest->entries) {
     QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName);
-    if (QFile::exists(entryFilePath)) {
-      if (!QFile::remove(entryFilePath)) {
-        qWarning() << "Could not remove" << entryFilePath;
-        return false;
-      }
+    if (QFile::exists(entryFilePath) && !QFile::remove(entryFilePath)) {
+      qWarning() << "Could not remove" << entryFilePath;
+      return false;
     }
     if (!QFile::rename(entryFilePath + mNewDistManifest->fileNameSuffix, entryFilePath)) {
       qWarning() << "Could not rename" << entryFilePath;
@@ -143,12 +145,14 @@ DistManager::downloadFinished()
     mNewDistManifest = DistManifest::fromFile(mOutputFile, QLatin1String(NEW_FILE_SUFFIX));
 
     if (!mNewDistManifest) {
+      // Can't read the downloaded manifest file
       fallBackToCurrDist();
       mOutputFile.remove();
       return;
     }
 
     if (mNewDistManifest == mCurrDistManifest && verifyDist(mCurrDistManifest)) {
+      // We're already running the latest version
       emit stateChanged(DistManagerState::UpToDateAndDistValid);
       mOutputFile.remove();
       return;
@@ -170,6 +174,7 @@ DistManager::downloadFinished()
 
   qDebug() << "Download queue is now empty";
   if (verifyDist(mNewDistManifest) && overwriteCurrDist()) {
+    // We've successfully committed the downloaded version
     emit stateChanged(DistManagerState::UpToDateAndDistValid);
     return;
   }

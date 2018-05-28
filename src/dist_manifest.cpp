@@ -29,7 +29,8 @@ DistManifest::fromFile(QFile& file, const QString& suffix)
   return manifest->entries.empty() ? nullptr : std::move(manifest);
 }
 
-bool operator==(const DistManifest& lhs, const DistManifest& rhs)
+bool
+operator==(const DistManifest& lhs, const DistManifest& rhs)
 {
   return lhs.md5.size() > 0 && rhs.md5.size() > 0 && lhs.md5 == rhs.md5;
 }
