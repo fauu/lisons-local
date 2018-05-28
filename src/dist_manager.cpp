@@ -5,6 +5,7 @@
 
 static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
 static const char* const MANIFEST_FILE_NAME = "manifest.txt";
+static const char* const MANIFEST_COLUMN_SEPARATOR = " ";
 static const char* const NEW_FILE_SUFFIX = ".new";
 
 DistManager::DistManager(QObject* parent, const QDir& saveDir)
@@ -21,13 +22,13 @@ DistManager::start()
   if (!mDistDir.exists()) {
     mDistDir.mkpath(".");
   }
-  enqueue(QLatin1String(MANIFEST_FILE_NAME));
+  enqueueDownload(QLatin1String(MANIFEST_FILE_NAME));
   QTimer::singleShot(0, this, &DistManager::startNextDownload);
   emit stateChanged(DistManagerState::DownloadingManifest);
 }
 
 void
-DistManager::enqueue(const QString& fileName)
+DistManager::enqueueDownload(const QString &fileName)
 {
   auto url = QUrl(QLatin1String(BASE_URL) + fileName);
   mDownloadQueue.enqueue(url);
@@ -47,7 +48,7 @@ DistManager::readManifest(QFile& file, const QString& suffix)
   QTextStream in(&file);
   while (!in.atEnd()) {
     QString line = in.readLine();
-    QStringList fields = line.split(" ");
+    QStringList fields = line.split(QLatin1String(MANIFEST_COLUMN_SEPARATOR));
     if (fields.size() != 2) {
       return nullptr;
     }
@@ -57,12 +58,12 @@ DistManager::readManifest(QFile& file, const QString& suffix)
 }
 
 bool
-DistManager::verifyPackage(std::unique_ptr<Manifest> const& manifest)
+DistManager::verifyDist(std::unique_ptr<Manifest> const &manifest)
 {
-  if (!manifest || manifest->entries.isEmpty()) {
+  if (!manifest) {
     return false;
   }
-  for (const auto& entry : manifest->entries) {
+  for (const ManifestEntry& entry : manifest->entries) {
     QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName) + manifest->suffix;
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
@@ -74,23 +75,25 @@ DistManager::verifyPackage(std::unique_ptr<Manifest> const& manifest)
 }
 
 void
-DistManager::deleteNewPackage()
+DistManager::deleteNewDist()
 {
   mDistDir.setNameFilters(QStringList() << "*" + QLatin1String(NEW_FILE_SUFFIX));
   mDistDir.setFilter(QDir::Files);
-  for (const auto& dirFile : mDistDir.entryList()) {
-    mDistDir.remove(dirFile);
+  for (const QString& dirEntry : mDistDir.entryList()) {
+    if (!mDistDir.remove(dirEntry)) {
+      qDebug() << "Could not remove" << dirEntry;
+    }
   }
 }
 
 void
-DistManager::overwritePackage()
+DistManager::overwriteCurrDist()
 {
   if (!mNewManifest) {
     return;
   }
   mNewManifest->entries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
-  for (const auto& entry : mNewManifest->entries) {
+  for (const ManifestEntry& entry : mNewManifest->entries) {
     QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName);
     if (QFile::exists(entryFilePath)) {
       if (!QFile::remove(entryFilePath)) {
@@ -114,13 +117,13 @@ DistManager::startNextDownload()
   QString savePath = mDistDir.absoluteFilePath(fileName);
   mOutputFile.setFileName(savePath);
   if (!mOutputFile.open(QIODevice::ReadWrite)) {
-    qWarning() << "Could not open " << savePath << " for writing: " << mOutputFile.errorString();
-    if (verifyPackage(mCurrManifest)) {
+    qWarning() << "Could not open" << savePath << "for writing:" << mOutputFile.errorString();
+    if (verifyDist(mCurrManifest)) {
       emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
     } else {
       emit stateChanged(DistManagerState::DistInvalid);
     }
-    deleteNewPackage();
+    deleteNewDist();
     return;
   }
 
@@ -128,16 +131,15 @@ DistManager::startNextDownload()
   mCurrentDownload = mNetworkAccessManager.get(request);
   connect(mCurrentDownload, &QNetworkReply::finished, this, &DistManager::downloadFinished);
   connect(mCurrentDownload, &QNetworkReply::readyRead, this, &DistManager::downloadReadyRead);
-
-  qDebug() << "Downloading" << url.toEncoded().constData();
+  qDebug() << "Downloading:" << url.toEncoded().constData();
 }
 
 void
 DistManager::downloadFinished()
 {
   if (mCurrentDownload->error()) {
-    qDebug() << "File download failed: " << mCurrentDownload->errorString();
-    if (verifyPackage(mCurrManifest)) {
+    qDebug() << "File download failed:" << mCurrentDownload->errorString();
+    if (verifyDist(mCurrManifest)) {
       emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
     } else {
       emit stateChanged(DistManagerState::DistInvalid);
@@ -152,43 +154,43 @@ DistManager::downloadFinished()
       mNewManifest = readManifest(mOutputFile, QLatin1String(NEW_FILE_SUFFIX));
       if (!mNewManifest) {
         // TODO: DRY startNextDownload()
-        if (verifyPackage(mCurrManifest)) {
+        if (verifyDist(mCurrManifest)) {
           emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
         } else {
           emit stateChanged(DistManagerState::DistInvalid);
         }
-        deleteNewPackage();
+        deleteNewDist();
       } else {
-        if (!mCurrManifest || mNewManifest->md5 != mCurrManifest->md5 || !verifyPackage(mCurrManifest)) {
-          for (const auto& entry : mNewManifest->entries) {
-            enqueue(entry.fileName);
+        if (!mCurrManifest || mNewManifest->md5 != mCurrManifest->md5 || !verifyDist(mCurrManifest)) {
+          for (const ManifestEntry& entry : mNewManifest->entries) {
+            enqueueDownload(entry.fileName);
           }
           emit stateChanged(DistManagerState::DownloadingDistFiles);
         } else {
           emit stateChanged(DistManagerState::UpToDateAndDistValid);
-          deleteNewPackage();
+          deleteNewDist();
           return;
         }
       }
     }
 
-    qDebug() << "Downloaded" << fileInfo.absoluteFilePath();
+    qDebug() << "Downloaded:" << fileInfo.absoluteFilePath();
     mCurrentDownload->deleteLater();
     mOutputFile.close();
 
     if (mDownloadQueue.isEmpty()) {
-      qDebug() << "Finished downloading";
+      qDebug() << "Download queue is now empty";
       // TODO: DRY
-      if (verifyPackage(mNewManifest)) {
-        overwritePackage();
+      if (verifyDist(mNewManifest)) {
+        overwriteCurrDist();
         emit stateChanged(DistManagerState::UpToDateAndDistValid);
       } else {
-        if (verifyPackage(mCurrManifest)) {
+        if (verifyDist(mCurrManifest)) {
           emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
         } else {
           emit stateChanged(DistManagerState::DistInvalid);
         }
-        deleteNewPackage();
+        deleteNewDist();
       }
     } else {
       startNextDownload();

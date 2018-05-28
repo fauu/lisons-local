@@ -38,11 +38,11 @@ signals:
   void stateChanged(DistManagerState newState);
 
 private:
-  void enqueue(const QString& fileName);
+  void enqueueDownload(const QString &fileName);
   std::unique_ptr<Manifest> readManifest(QFile& file, const QString& suffix);
-  bool verifyPackage(std::unique_ptr<Manifest> const& manifest);
-  void deleteNewPackage();
-  void overwritePackage();
+  bool verifyDist(std::unique_ptr<Manifest> const &manifest);
+  void deleteNewDist();
+  void overwriteCurrDist();
 
 private slots:
   void startNextDownload();
