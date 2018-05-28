@@ -18,7 +18,7 @@ Backend::init()
   qDebug() << "appDataDir =" << getAppDataDir().absolutePath();
   connect(
     &mDistManager, &DistManager::stateChanged, this, &Backend::distManagerStateChanged);
-  mDistManager.start();
+  mDistManager.updateDist();
 }
 
 short

@@ -1,26 +1,14 @@
 #ifndef LISONS_LOCAL_DIST_MANAGER_H
 #define LISONS_LOCAL_DIST_MANAGER_H
 
+#include "dist_manifest.h"
+
 #include <QtCore>
 #include <QtNetwork>
 
-struct ManifestEntry
-{
-  QString md5;
-  QString fileName;
-};
-
-// TODO: Make it a class?
-struct Manifest
-{
-  QString suffix;
-  QByteArray md5;
-  QVector<ManifestEntry> entries;
-};
-
 enum DistManagerState
 {
-  DownloadingManifest,
+  DownloadingDistManifest,
   DownloadingDistFiles,
   UpToDateAndDistValid,
   CouldNotUpdateButDistValid,
@@ -32,17 +20,17 @@ class DistManager : public QObject
   Q_OBJECT
 public:
   DistManager(QObject* parent, const QDir& saveDir);
-  void start();
+  void updateDist();
 
 signals:
   void stateChanged(DistManagerState newState);
 
 private:
-  void enqueueDownload(const QString &fileName);
-  std::unique_ptr<Manifest> readManifest(QFile& file, const QString& suffix);
-  bool verifyDist(std::unique_ptr<Manifest> const &manifest);
+  void enqueueDownload(const QString& fileName);
+  bool verifyDist(std::unique_ptr<DistManifest> const& manifest);
   void deleteNewDist();
-  void overwriteCurrDist();
+  bool overwriteCurrDist();
+  void fallBackToCurrDist();
 
 private slots:
   void startNextDownload();
@@ -55,8 +43,8 @@ private:
   QQueue<QUrl> mDownloadQueue;
   QNetworkReply* mCurrentDownload = nullptr;
   QFile mOutputFile;
-  std::unique_ptr<Manifest> mCurrManifest;
-  std::unique_ptr<Manifest> mNewManifest;
+  std::unique_ptr<DistManifest> mCurrDistManifest;
+  std::unique_ptr<DistManifest> mNewDistManifest;
 };
 
 #endif // LISONS_LOCAL_DIST_MANAGER_H

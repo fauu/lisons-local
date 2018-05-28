@@ -1,76 +1,57 @@
 #include "dist_manager.h"
+#include "dist_manifest.h"
 #include "file_md5.h"
 
 #include <QStandardPaths>
 
 static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
-static const char* const MANIFEST_FILE_NAME = "manifest.txt";
-static const char* const MANIFEST_COLUMN_SEPARATOR = " ";
+static const char* const MANIFEST_FILE_NAME = "manifest.txt"; // TODO: Move to dist_manifest
 static const char* const NEW_FILE_SUFFIX = ".new";
 
 DistManager::DistManager(QObject* parent, const QDir& saveDir)
   : QObject(parent)
   , mDistDir(saveDir)
 {
-  QFile manifestFile(mDistDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)));
-  mCurrManifest = readManifest(manifestFile, QLatin1String(""));
+  QString DistManifestPath = mDistDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
+  QFile DistManifestFile(DistManifestPath);
+  mCurrDistManifest = DistManifest::fromFile(DistManifestFile, QLatin1String(""));
 }
 
 void
-DistManager::start()
+DistManager::updateDist()
 {
   if (!mDistDir.exists()) {
     mDistDir.mkpath(".");
   }
+
   enqueueDownload(QLatin1String(MANIFEST_FILE_NAME));
   QTimer::singleShot(0, this, &DistManager::startNextDownload);
-  emit stateChanged(DistManagerState::DownloadingManifest);
+  emit stateChanged(DistManagerState::DownloadingDistManifest);
 }
 
 void
-DistManager::enqueueDownload(const QString &fileName)
+DistManager::enqueueDownload(const QString& fileName)
 {
   auto url = QUrl(QLatin1String(BASE_URL) + fileName);
   mDownloadQueue.enqueue(url);
 }
 
-std::unique_ptr<Manifest>
-DistManager::readManifest(QFile& file, const QString& suffix)
-{
-  if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
-    return nullptr;
-  }
-  auto manifest = std::make_unique<Manifest>();
-  manifest->suffix = suffix;
-  file.seek(0);
-  manifest->md5 = fileMd5(file);
-  file.seek(0);
-  QTextStream in(&file);
-  while (!in.atEnd()) {
-    QString line = in.readLine();
-    QStringList fields = line.split(QLatin1String(MANIFEST_COLUMN_SEPARATOR));
-    if (fields.size() != 2) {
-      return nullptr;
-    }
-    manifest->entries.push_back({ fields[0], fields[1] });
-  }
-  return manifest->entries.empty() ? nullptr : std::move(manifest);
-}
-
 bool
-DistManager::verifyDist(std::unique_ptr<Manifest> const &manifest)
+DistManager::verifyDist(std::unique_ptr<DistManifest> const& DistManifest)
 {
-  if (!manifest) {
+  if (!DistManifest) {
     return false;
   }
-  for (const ManifestEntry& entry : manifest->entries) {
-    QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName) + manifest->suffix;
+
+  for (const DistManifest::Entry& entry : DistManifest->entries) {
+    QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName) + DistManifest->fileNameSuffix;
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
       return false;
     }
   }
+
   return true;
 }
 
@@ -86,24 +67,40 @@ DistManager::deleteNewDist()
   }
 }
 
-void
+bool
 DistManager::overwriteCurrDist()
 {
-  if (!mNewManifest) {
-    return;
+  if (!mNewDistManifest) {
+    return false;
   }
-  mNewManifest->entries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
-  for (const ManifestEntry& entry : mNewManifest->entries) {
+
+  mNewDistManifest->entries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
+  for (const DistManifest::Entry& entry : mNewDistManifest->entries) {
     QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName);
     if (QFile::exists(entryFilePath)) {
       if (!QFile::remove(entryFilePath)) {
         qWarning() << "Could not remove" << entryFilePath;
+        return false;
       }
     }
-    if (!QFile::rename(entryFilePath + mNewManifest->suffix, entryFilePath)) {
+    if (!QFile::rename(entryFilePath + mNewDistManifest->fileNameSuffix, entryFilePath)) {
       qWarning() << "Could not rename" << entryFilePath;
+      return false;
     }
   }
+
+  return true;
+}
+
+void
+DistManager::fallBackToCurrDist()
+{
+  if (verifyDist(mCurrDistManifest)) {
+    emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
+  } else {
+    emit stateChanged(DistManagerState::DistInvalid);
+  }
+  deleteNewDist();
 }
 
 void
@@ -112,18 +109,14 @@ DistManager::startNextDownload()
   if (mDownloadQueue.isEmpty()) {
     return;
   }
+
   QUrl url = mDownloadQueue.dequeue();
   QString fileName = QFileInfo(url.path()).fileName() + QLatin1String(NEW_FILE_SUFFIX);
-  QString savePath = mDistDir.absoluteFilePath(fileName);
-  mOutputFile.setFileName(savePath);
+  QString filePath = mDistDir.absoluteFilePath(fileName);
+  mOutputFile.setFileName(filePath);
   if (!mOutputFile.open(QIODevice::ReadWrite)) {
-    qWarning() << "Could not open" << savePath << "for writing:" << mOutputFile.errorString();
-    if (verifyDist(mCurrManifest)) {
-      emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
-    } else {
-      emit stateChanged(DistManagerState::DistInvalid);
-    }
-    deleteNewDist();
+    qWarning() << "Could not open" << filePath << "for writing:" << mOutputFile.errorString();
+    fallBackToCurrDist();
     return;
   }
 
@@ -137,65 +130,51 @@ DistManager::startNextDownload()
 void
 DistManager::downloadFinished()
 {
+  mCurrentDownload->deleteLater();
   if (mCurrentDownload->error()) {
     qDebug() << "File download failed:" << mCurrentDownload->errorString();
-    if (verifyDist(mCurrManifest)) {
-      emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
-    } else {
-      emit stateChanged(DistManagerState::DistInvalid);
-    }
-    mCurrentDownload->deleteLater();
+    fallBackToCurrDist();
     mOutputFile.remove();
     return;
-  } else {
-    auto fileInfo = QFileInfo(mOutputFile);
-
-    if (!mNewManifest) {
-      mNewManifest = readManifest(mOutputFile, QLatin1String(NEW_FILE_SUFFIX));
-      if (!mNewManifest) {
-        // TODO: DRY startNextDownload()
-        if (verifyDist(mCurrManifest)) {
-          emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
-        } else {
-          emit stateChanged(DistManagerState::DistInvalid);
-        }
-        deleteNewDist();
-      } else {
-        if (!mCurrManifest || mNewManifest->md5 != mCurrManifest->md5 || !verifyDist(mCurrManifest)) {
-          for (const ManifestEntry& entry : mNewManifest->entries) {
-            enqueueDownload(entry.fileName);
-          }
-          emit stateChanged(DistManagerState::DownloadingDistFiles);
-        } else {
-          emit stateChanged(DistManagerState::UpToDateAndDistValid);
-          deleteNewDist();
-          return;
-        }
-      }
-    }
-
-    qDebug() << "Downloaded:" << fileInfo.absoluteFilePath();
-    mCurrentDownload->deleteLater();
-    mOutputFile.close();
-
-    if (mDownloadQueue.isEmpty()) {
-      qDebug() << "Download queue is now empty";
-      // TODO: DRY
-      if (verifyDist(mNewManifest)) {
-        overwriteCurrDist();
-        emit stateChanged(DistManagerState::UpToDateAndDistValid);
-      } else {
-        if (verifyDist(mCurrManifest)) {
-          emit stateChanged(DistManagerState::CouldNotUpdateButDistValid);
-        } else {
-          emit stateChanged(DistManagerState::DistInvalid);
-        }
-        deleteNewDist();
-      }
-    } else {
-      startNextDownload();
-    }
   }
+
+  if (!mNewDistManifest) {
+    // Assumption: if we don't have the new DistManifest data yet then the file is the new manifest
+    mNewDistManifest = DistManifest::fromFile(mOutputFile, QLatin1String(NEW_FILE_SUFFIX));
+
+    if (!mNewDistManifest) {
+      fallBackToCurrDist();
+      mOutputFile.remove();
+      return;
+    }
+
+    if (mNewDistManifest == mCurrDistManifest && verifyDist(mCurrDistManifest)) {
+      emit stateChanged(DistManagerState::UpToDateAndDistValid);
+      mOutputFile.remove();
+      return;
+    }
+
+    for (const DistManifest::Entry& entry : mNewDistManifest->entries) {
+      enqueueDownload(entry.fileName);
+    }
+    emit stateChanged(DistManagerState::DownloadingDistFiles);
+  }
+
+  qDebug() << "Downloaded:" << QFileInfo(mOutputFile).absoluteFilePath();
+  mOutputFile.close();
+
+  if (!mDownloadQueue.isEmpty()) {
+    startNextDownload();
+    return;
+  }
+
+  qDebug() << "Download queue is now empty";
+  if (verifyDist(mNewDistManifest) && overwriteCurrDist()) {
+    emit stateChanged(DistManagerState::UpToDateAndDistValid);
+    return;
+  }
+
+  fallBackToCurrDist();
 }
 
 void
