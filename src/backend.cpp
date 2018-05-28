@@ -1,5 +1,5 @@
 #include "backend.h"
-#include "download_manager.h"
+#include "dist_manager.h"
 
 #include "lib/hobrasofthttp/httpserver.h"
 #include "lib/hobrasofthttp/httpsettings.h"
@@ -7,11 +7,9 @@
 #include <QDebug>
 #include <QtCore>
 
-static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
-
 Backend::Backend(QObject* parent)
   : QObject(parent)
-  , mDownloadManager(this, getAppDataDir())
+  , mDistManager(this, getAppDataDir())
 {}
 
 void
@@ -19,14 +17,14 @@ Backend::init()
 {
   qDebug() << "appDataDir =" << getAppDataDir().absolutePath();
   connect(
-    &mDownloadManager, &DownloadManager::stateChanged, this, &Backend::downloadManagerStateChanged);
-  mDownloadManager.start();
+    &mDistManager, &DistManager::stateChanged, this, &Backend::distManagerStateChanged);
+  mDistManager.start();
 }
 
 short
-Backend::getExposedDownloadManagerState() const
+Backend::getExposedDistManagerState() const
 {
-  return mExposedDownloadManagerState;
+  return mExposedDistManagerState;
 }
 
 short
@@ -36,11 +34,11 @@ Backend::getExposedServerState() const
 }
 
 void
-Backend::setExposedDownloadManagerState(short newState)
+Backend::setExposedDistManagerState(short newState)
 {
-  if (newState != mExposedDownloadManagerState) {
-    mExposedDownloadManagerState = newState;
-    emit exposedDownloadManagerStateChanged();
+  if (newState != mExposedDistManagerState) {
+    mExposedDistManagerState = newState;
+    emit exposedDistManagerStateChanged();
   }
 }
 
@@ -73,16 +71,16 @@ Backend::launchServer()
 }
 
 void
-Backend::downloadManagerStateChanged(DownloadManagerState newState)
+Backend::distManagerStateChanged(DistManagerState newState)
 {
   switch (newState) {
-    case DownloadManagerState::UpToDateAndPackageValid: // Fall through
-    case DownloadManagerState::CouldNotUpdateButPackageValid:
+    case DistManagerState::UpToDateAndDistValid: // Fall through
+    case DistManagerState::CouldNotUpdateButDistValid:
       launchServer();
       break;
     default:; // Skip
   }
-  setExposedDownloadManagerState(newState);
+  setExposedDistManagerState(newState);
 }
 
 void

@@ -1,7 +1,7 @@
 #ifndef LISONS_LOCAL_BACKEND_H
 #define LISONS_LOCAL_BACKEND_H
 
-#include "download_manager.h"
+#include "dist_manager.h"
 
 #include "lib/hobrasofthttp/httpserver.h"
 
@@ -19,10 +19,10 @@ class Backend : public QObject
 {
   Q_OBJECT
   // clang-format off
-  Q_PROPERTY(short downloadManagerState
-             READ getExposedDownloadManagerState
-             WRITE setExposedDownloadManagerState
-             NOTIFY exposedDownloadManagerStateChanged)
+  Q_PROPERTY(short distManagerState
+             READ getExposedDistManagerState
+             WRITE setExposedDistManagerState
+             NOTIFY exposedDistManagerStateChanged)
   Q_PROPERTY(short serverState
              READ getExposedServerState
              WRITE setExposedServerState
@@ -32,29 +32,29 @@ class Backend : public QObject
 public:
   explicit Backend(QObject* parent);
   void init();
-  short getExposedDownloadManagerState() const;
+  short getExposedDistManagerState() const;
   short getExposedServerState() const;
 
 signals:
-  void exposedDownloadManagerStateChanged();
+  void exposedDistManagerStateChanged();
   void exposedServerStateChanged();
 
 private:
-  void setExposedDownloadManagerState(short newState);
+  void setExposedDistManagerState(short newState);
   void setExposedServerState(short newState);
   QDir& getAppDataDir();
   void launchServer();
 
 private slots:
-  void downloadManagerStateChanged(DownloadManagerState newState);
+  void distManagerStateChanged(DistManagerState newState);
   void serverStarted();
   void serverCouldNotStart();
 
 private:
-  DownloadManager mDownloadManager;
+  DistManager mDistManager;
   HobrasoftHttpd::HttpServer* mServer;
-  short mExposedDownloadManagerState;
-  short mExposedServerState = ServerState::Initial;
+  short mExposedDistManagerState = 0;
+  short mExposedServerState = 0;
 };
 
 #endif // LISONS_LOCAL_BACKEND_H

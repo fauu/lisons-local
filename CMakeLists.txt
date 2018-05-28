@@ -28,7 +28,7 @@ set(SOURCES
     lib/hobrasofthttp/shtmlcontroller.cpp
     lib/hobrasofthttp/staticfilecontroller.cpp
     src/main.cpp
-    src/download_manager.cpp
+    src/dist_manager.cpp
     src/backend.cpp
     src/file_md5.cpp
 )
@@ -47,7 +47,7 @@ set(HEADERS
     lib/hobrasofthttp/httptcpserver.h
     lib/hobrasofthttp/shtmlcontroller.h
     lib/hobrasofthttp/staticfilecontroller.h
-    src/download_manager.h
+    src/dist_manager.h
     src/backend.h
     src/file_md5.h
 )

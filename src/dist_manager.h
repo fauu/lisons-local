@@ -1,5 +1,5 @@
-#ifndef LISONS_LOCAL_DOWNLOAD_MANAGER_H
-#define LISONS_LOCAL_DOWNLOAD_MANAGER_H
+#ifndef LISONS_LOCAL_DIST_MANAGER_H
+#define LISONS_LOCAL_DIST_MANAGER_H
 
 #include <QtCore>
 #include <QtNetwork>
@@ -18,25 +18,24 @@ struct Manifest
   QVector<ManifestEntry> entries;
 };
 
-enum DownloadManagerState
+enum DistManagerState
 {
   DownloadingManifest,
-  DownloadingLisons,
-  UpToDateAndPackageValid,
-  CouldNotUpdateButPackageValid,
-  PackageInvalid,
+  DownloadingDistFiles,
+  UpToDateAndDistValid,
+  CouldNotUpdateButDistValid,
+  DistInvalid,
 };
 
-class DownloadManager : public QObject
+class DistManager : public QObject
 {
   Q_OBJECT
 public:
-  DownloadManager(QObject* parent, const QDir& saveDir);
+  DistManager(QObject* parent, const QDir& saveDir);
   void start();
 
 signals:
-  void finished();
-  void stateChanged(DownloadManagerState newState);
+  void stateChanged(DistManagerState newState);
 
 private:
   void enqueue(const QString& fileName);
@@ -51,14 +50,13 @@ private slots:
   void downloadFinished();
 
 private:
-  QDir mDownloadDir;
-  QString mManifestPath;
+  QDir mDistDir;
   QNetworkAccessManager mNetworkAccessManager;
   QQueue<QUrl> mDownloadQueue;
   QNetworkReply* mCurrentDownload = nullptr;
   QFile mOutputFile;
-  std::unique_ptr<Manifest> mManifest;
+  std::unique_ptr<Manifest> mCurrManifest;
   std::unique_ptr<Manifest> mNewManifest;
 };
 
-#endif // LISONS_LOCAL_DOWNLOAD_MANAGER_H
+#endif // LISONS_LOCAL_DIST_MANAGER_H
