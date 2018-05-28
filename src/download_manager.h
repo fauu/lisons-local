@@ -40,7 +40,7 @@ signals:
 private:
   void enqueue(const QString& fileName);
   std::unique_ptr<Manifest> readManifest(QFile& file);
-  bool verifyPackage(bool newOne = false);
+  bool verifyPackage(std::unique_ptr<Manifest> const& manifest, bool newOne = false);
   void deleteNewPackage();
   void overwritePackage();
 

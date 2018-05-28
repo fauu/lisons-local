@@ -42,6 +42,7 @@ DownloadManager::readManifest(QFile& file)
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
     return nullptr;
   }
+  file.seek(0);
   manifest->md5 = fileMd5(file);
   file.seek(0);
   QTextStream in(&file);
@@ -58,10 +59,8 @@ DownloadManager::readManifest(QFile& file)
 
 // TODO: Make options an enum? Check if two-element enums are "recommended"
 bool
-DownloadManager::verifyPackage(bool newOne)
+DownloadManager::verifyPackage(std::unique_ptr<Manifest> const& manifest, bool newOne)
 {
-  // TODO: TODON'T
-  Manifest* manifest = (newOne ? mNewManifest : mManifest).get();
   if (!manifest || manifest->entries.isEmpty()) {
     return false;
   }
@@ -73,7 +72,6 @@ DownloadManager::verifyPackage(bool newOne)
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
-      delete manifest;
       return false;
     }
   }
@@ -110,11 +108,14 @@ DownloadManager::startNextDownload()
   if (mDownloadQueue.isEmpty()) {
     qDebug() << "Finished downloading";
     // TODO: DRY
-    if (verifyPackage(true)) {
+    if (mManifest && mNewManifest && mNewManifest->md5 == mManifest->md5) {
+      emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
+      deleteNewPackage();
+    } else if (verifyPackage(mNewManifest, true)) {
       overwritePackage();
       emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
     } else {
-      if (verifyPackage()) {
+      if (verifyPackage(mManifest)) {
         emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
       } else {
         emit stateChanged(DownloadManagerState::PackageInvalid);
@@ -132,7 +133,7 @@ DownloadManager::startNextDownload()
   mOutputFile.setFileName(savePath);
   if (!mOutputFile.open(QIODevice::ReadWrite)) {
     qWarning() << "Could not open '" << savePath << "' for writing: " << mOutputFile.errorString();
-    if (verifyPackage()) {
+    if (verifyPackage(mManifest)) {
       emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
     } else {
       emit stateChanged(DownloadManagerState::PackageInvalid);
@@ -155,7 +156,7 @@ DownloadManager::downloadFinished()
 {
   if (mCurrentDownload->error()) {
     qDebug() << "File download failed";
-    if (verifyPackage()) {
+    if (verifyPackage(mManifest)) {
       emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
     } else {
       emit stateChanged(DownloadManagerState::PackageInvalid);
@@ -171,17 +172,14 @@ DownloadManager::downloadFinished()
       mNewManifest = readManifest(mOutputFile);
       if (!mNewManifest) {
         // TODO: DRY startNextDownload()
-        if (verifyPackage()) {
+        if (verifyPackage(mManifest)) {
           emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
         } else {
           emit stateChanged(DownloadManagerState::PackageInvalid);
         }
         deleteNewPackage();
       } else {
-        // BUG: md5s are different somehow?
-        if (mManifest && mNewManifest->md5 == mManifest->md5 && verifyPackage()) {
-          emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
-        } else {
+        if (!mManifest || mNewManifest->md5 != mManifest->md5 && !verifyPackage(mManifest)) {
           for (const auto& entry : mNewManifest->entries) {
             enqueue(entry.fileName);
           }
