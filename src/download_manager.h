@@ -13,6 +13,7 @@ struct ManifestEntry
 // TODO: Make it a class?
 struct Manifest
 {
+  QString suffix;
   QByteArray md5;
   QVector<ManifestEntry> entries;
 };
@@ -30,7 +31,7 @@ class DownloadManager : public QObject
 {
   Q_OBJECT
 public:
-  DownloadManager(QObject* parent, const QString& savePath);
+  DownloadManager(QObject* parent, const QDir& saveDir);
   void start();
 
 signals:
@@ -39,8 +40,8 @@ signals:
 
 private:
   void enqueue(const QString& fileName);
-  std::unique_ptr<Manifest> readManifest(QFile& file);
-  bool verifyPackage(std::unique_ptr<Manifest> const& manifest, bool newOne = false);
+  std::unique_ptr<Manifest> readManifest(QFile& file, const QString& suffix);
+  bool verifyPackage(std::unique_ptr<Manifest> const& manifest);
   void deleteNewPackage();
   void overwritePackage();
 
@@ -52,7 +53,6 @@ private slots:
 private:
   QDir mDownloadDir;
   QString mManifestPath;
-  QString mNewManifestFileName;
   QNetworkAccessManager mNetworkAccessManager;
   QQueue<QUrl> mDownloadQueue;
   QNetworkReply* mCurrentDownload = nullptr;

@@ -30,7 +30,7 @@ class Backend : public QObject
   // clang-format on
 
 public:
-  explicit Backend(QObject* parent = nullptr);
+  explicit Backend(QObject* parent);
   void init();
   short getExposedDownloadManagerState() const;
   short getExposedServerState() const;
@@ -42,6 +42,7 @@ signals:
 private:
   void setExposedDownloadManagerState(short newState);
   void setExposedServerState(short newState);
+  QDir& getAppDataDir();
   void launchServer();
 
 private slots:

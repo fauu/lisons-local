@@ -7,14 +7,13 @@ static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/liso
 static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 static const char* const NEW_FILE_SUFFIX = ".new";
 
-DownloadManager::DownloadManager(QObject* parent, const QString& savePath)
+DownloadManager::DownloadManager(QObject* parent, const QDir& saveDir)
   : QObject(parent)
-  , mDownloadDir(savePath)
+  , mDownloadDir(saveDir)
   , mManifestPath(mDownloadDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)))
-  , mNewManifestFileName(QLatin1String(MANIFEST_FILE_NAME) + QLatin1String(NEW_FILE_SUFFIX))
 {
   QFile manifestFile(mManifestPath);
-  mManifest = readManifest(manifestFile);
+  mManifest = readManifest(manifestFile, QLatin1String(""));
 }
 
 void
@@ -23,8 +22,8 @@ DownloadManager::start()
   if (!mDownloadDir.exists()) {
     mDownloadDir.mkpath(".");
   }
-    enqueue(QLatin1String(MANIFEST_FILE_NAME));
-    QTimer::singleShot(0, this, &DownloadManager::startNextDownload);
+  enqueue(QLatin1String(MANIFEST_FILE_NAME));
+  QTimer::singleShot(0, this, &DownloadManager::startNextDownload);
   emit stateChanged(DownloadManagerState::DownloadingManifest);
 }
 
@@ -36,12 +35,13 @@ DownloadManager::enqueue(const QString& fileName)
 }
 
 std::unique_ptr<Manifest>
-DownloadManager::readManifest(QFile& file)
+DownloadManager::readManifest(QFile& file, const QString& suffix)
 {
-  auto manifest = std::make_unique<Manifest>();
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
     return nullptr;
   }
+  auto manifest = std::make_unique<Manifest>();
+  manifest->suffix = suffix;
   file.seek(0);
   manifest->md5 = fileMd5(file);
   file.seek(0);
@@ -59,16 +59,13 @@ DownloadManager::readManifest(QFile& file)
 
 // TODO: Make options an enum? Check if two-element enums are "recommended"
 bool
-DownloadManager::verifyPackage(std::unique_ptr<Manifest> const& manifest, bool newOne)
+DownloadManager::verifyPackage(std::unique_ptr<Manifest> const& manifest)
 {
   if (!manifest || manifest->entries.isEmpty()) {
     return false;
   }
   for (const auto& entry : manifest->entries) {
-    QString entryFilePath = mDownloadDir.absoluteFilePath(entry.fileName);
-    if (newOne) {
-      entryFilePath += NEW_FILE_SUFFIX;
-    }
+    QString entryFilePath = mDownloadDir.absoluteFilePath(entry.fileName) + manifest->suffix;
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
@@ -98,7 +95,7 @@ DownloadManager::overwritePackage()
     if (QFile::exists(entryFilePath)) {
       QFile::remove(entryFilePath);
     }
-    QFile::rename(entryFilePath + QLatin1String(NEW_FILE_SUFFIX), entryFilePath);
+    QFile::rename(entryFilePath + mNewManifest->suffix, entryFilePath);
   }
 }
 
@@ -106,27 +103,8 @@ void
 DownloadManager::startNextDownload()
 {
   if (mDownloadQueue.isEmpty()) {
-    qDebug() << "Finished downloading";
-    // TODO: DRY
-    if (mManifest && mNewManifest && mNewManifest->md5 == mManifest->md5) {
-      emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
-      deleteNewPackage();
-    } else if (verifyPackage(mNewManifest, true)) {
-      overwritePackage();
-      emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
-    } else {
-      if (verifyPackage(mManifest)) {
-        emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
-      } else {
-        emit stateChanged(DownloadManagerState::PackageInvalid);
-      }
-      deleteNewPackage();
-    }
-    // TODO: remove finished() signal?
-    emit finished();
     return;
   }
-
   QUrl url = mDownloadQueue.dequeue();
   QString fileName = QFileInfo(url.path()).fileName() + QLatin1String(NEW_FILE_SUFFIX);
   QString savePath = mDownloadDir.absoluteFilePath(fileName);
@@ -139,7 +117,6 @@ DownloadManager::startNextDownload()
       emit stateChanged(DownloadManagerState::PackageInvalid);
     }
     deleteNewPackage();
-    // XXX: do I need to delete something here after giving up or what?
     return;
   }
 
@@ -163,13 +140,14 @@ DownloadManager::downloadFinished()
     }
     mCurrentDownload->deleteLater();
     mOutputFile.remove();
+    return;
   } else {
     auto fileInfo = QFileInfo(mOutputFile);
 
-    if (fileInfo.fileName() == mNewManifestFileName) {
+    if (!mNewManifest) {
       qDebug() << "Downloaded new manifest file";
 
-      mNewManifest = readManifest(mOutputFile);
+      mNewManifest = readManifest(mOutputFile, QLatin1String(NEW_FILE_SUFFIX));
       if (!mNewManifest) {
         // TODO: DRY startNextDownload()
         if (verifyPackage(mManifest)) {
@@ -179,11 +157,15 @@ DownloadManager::downloadFinished()
         }
         deleteNewPackage();
       } else {
-        if (!mManifest || mNewManifest->md5 != mManifest->md5 && !verifyPackage(mManifest)) {
+        if (!mManifest || mNewManifest->md5 != mManifest->md5 || !verifyPackage(mManifest)) {
           for (const auto& entry : mNewManifest->entries) {
             enqueue(entry.fileName);
           }
           emit stateChanged(DownloadManagerState::DownloadingLisons);
+        } else {
+          emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
+          deleteNewPackage();
+          return;
         }
       }
     }
@@ -191,7 +173,26 @@ DownloadManager::downloadFinished()
     qDebug() << "File download succeeded";
     mCurrentDownload->deleteLater();
     mOutputFile.close();
-    startNextDownload();
+
+    if (mDownloadQueue.isEmpty()) {
+      qDebug() << "Finished downloading";
+      // TODO: DRY
+      if (verifyPackage(mNewManifest)) {
+        overwritePackage();
+        emit stateChanged(DownloadManagerState::UpToDateAndPackageValid);
+      } else {
+        if (verifyPackage(mManifest)) {
+          emit stateChanged(DownloadManagerState::CouldNotUpdateButPackageValid);
+        } else {
+          emit stateChanged(DownloadManagerState::PackageInvalid);
+        }
+        deleteNewPackage();
+      }
+      // TODO: remove finished() signal?
+      emit finished();
+    } else {
+      startNextDownload();
+    }
   }
 }
 

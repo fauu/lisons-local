@@ -7,20 +7,17 @@
 #include <QDebug>
 #include <QtCore>
 
-static QString const APP_DATA_PATH =
-  QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation)
-  + "/lisons-local";
+static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
 
 Backend::Backend(QObject* parent)
   : QObject(parent)
-  , mDownloadManager(this, APP_DATA_PATH)
-{
-}
+  , mDownloadManager(this, getAppDataDir())
+{}
 
 void
 Backend::init()
 {
-  qDebug() << "APP_DATA_PATH =" << APP_DATA_PATH;
+  qDebug() << "appDataDir =" << getAppDataDir().absolutePath();
   connect(
     &mDownloadManager, &DownloadManager::stateChanged, this, &Backend::downloadManagerStateChanged);
   mDownloadManager.start();
@@ -56,11 +53,19 @@ Backend::setExposedServerState(short newState)
   }
 }
 
+QDir&
+Backend::getAppDataDir()
+{
+  static QDir appDataDir(
+    QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation));
+  return appDataDir;
+}
+
 void
 Backend::launchServer()
 {
   HobrasoftHttpd::HttpSettings serverSettings(this);
-  serverSettings.setDocroot(APP_DATA_PATH);
+  serverSettings.setDocroot(getAppDataDir().absolutePath());
   mServer = new HobrasoftHttpd::HttpServer(&serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);
