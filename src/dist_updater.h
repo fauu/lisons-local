@@ -1,12 +1,12 @@
-#ifndef LISONS_LOCAL_DIST_MANAGER_H
-#define LISONS_LOCAL_DIST_MANAGER_H
+#ifndef LISONS_LOCAL_DIST_UPDATER_H
+#define LISONS_LOCAL_DIST_UPDATER_H
 
 #include "dist.h"
 
 #include <QtCore>
 #include <QtNetwork>
 
-enum DistManagerState
+enum DistUpdaterState
 {
   DownloadingDistManifest,
   DownloadingDistFiles,
@@ -15,21 +15,18 @@ enum DistManagerState
   DistInvalid,
 };
 
-class DistManager : public QObject
+class DistUpdater : public QObject
 {
   Q_OBJECT
 public:
-  DistManager(QObject* parent, const QDir& saveDir);
+  DistUpdater(QObject* parent, const QDir& saveDir);
   void updateDist();
 
 signals:
-  void stateChanged(DistManagerState newState);
+  void stateChanged(DistUpdaterState newState);
 
 private:
   void enqueueDownload(const QString& fileName);
-  bool verifyDist(std::unique_ptr<Dist> const& manifest);
-  void deleteNewDist();
-  bool overwriteCurrDist();
   void fallBackToCurrDist();
 
 private slots:
@@ -47,4 +44,4 @@ private:
   std::unique_ptr<Dist> mNewDist;
 };
 
-#endif // LISONS_LOCAL_DIST_MANAGER_H
+#endif // LISONS_LOCAL_DIST_UPDATER_H

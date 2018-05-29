@@ -1,5 +1,5 @@
 #include "backend.h"
-#include "dist_manager.h"
+#include "dist_updater.h"
 
 #include "lib/hobrasofthttp/httpserver.h"
 #include "lib/hobrasofthttp/httpsettings.h"
@@ -9,21 +9,21 @@
 
 Backend::Backend(QObject* parent)
   : QObject(parent)
-  , mDistManager(this, getAppDataDir())
+  , mDistUpdater(this, getAppDataDir())
 {}
 
 void
 Backend::init()
 {
   qDebug() << "appDataDir =" << getAppDataDir().absolutePath();
-  connect(&mDistManager, &DistManager::stateChanged, this, &Backend::distManagerStateChanged);
-  mDistManager.updateDist();
+  connect(&mDistUpdater, &DistUpdater::stateChanged, this, &Backend::distUpdaterStateChanged);
+  mDistUpdater.updateDist();
 }
 
 short
-Backend::getExposedDistManagerState() const
+Backend::getExposedDistUpdaterState() const
 {
-  return mExposedDistManagerState;
+  return mExposedDistUpdaterState;
 }
 
 short
@@ -33,11 +33,11 @@ Backend::getExposedServerState() const
 }
 
 void
-Backend::setExposedDistManagerState(short newState)
+Backend::setExposedDistUpdaterState(short newState)
 {
-  if (newState != mExposedDistManagerState) {
-    mExposedDistManagerState = newState;
-    emit exposedDistManagerStateChanged();
+  if (newState != mExposedDistUpdaterState) {
+    mExposedDistUpdaterState = newState;
+    emit exposedDistUpdaterStateChanged();
   }
 }
 
@@ -71,16 +71,16 @@ Backend::launchServer()
 }
 
 void
-Backend::distManagerStateChanged(DistManagerState newState)
+Backend::distUpdaterStateChanged(DistUpdaterState newState)
 {
   switch (newState) {
-    case DistManagerState::UpToDateAndDistValid: // Fall through
-    case DistManagerState::CouldNotUpdateButDistValid:
+    case DistUpdaterState::UpToDateAndDistValid: // Fall through
+    case DistUpdaterState::CouldNotUpdateButDistValid:
       launchServer();
       break;
     default:; // Skip
   }
-  setExposedDistManagerState(newState);
+  setExposedDistUpdaterState(newState);
 }
 
 void

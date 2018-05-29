@@ -13,12 +13,19 @@ public:
   };
 
 public:
-  static std::unique_ptr<Dist> fromManifestFile(QFile &file, const QString &suffix);
+  static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, const QString& suffix);
+  bool isValid();
+  bool changeSuffixOverwriting(const QString& newSuffix);
+  void remove();
 
 public:
+  QDir& dir;
   QString fileNameSuffix;
   QByteArray md5;
   QVector<FileEntry> entries;
+
+private:
+  Dist(QDir& dir, const QString& suffix, QByteArray& md5);
 };
 
 bool

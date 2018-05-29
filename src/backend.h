@@ -1,7 +1,7 @@
 #ifndef LISONS_LOCAL_BACKEND_H
 #define LISONS_LOCAL_BACKEND_H
 
-#include "dist_manager.h"
+#include "dist_updater.h"
 
 #include "lib/hobrasofthttp/httpserver.h"
 
@@ -19,10 +19,10 @@ class Backend : public QObject
 {
   Q_OBJECT
   // clang-format off
-  Q_PROPERTY(short distManagerState
-             READ getExposedDistManagerState
-             WRITE setExposedDistManagerState
-             NOTIFY exposedDistManagerStateChanged)
+  Q_PROPERTY(short distUpdaterState
+             READ getExposedDistUpdaterState
+             WRITE setExposedDistUpdaterState
+             NOTIFY exposedDistUpdaterStateChanged)
   Q_PROPERTY(short serverState
              READ getExposedServerState
              WRITE setExposedServerState
@@ -32,28 +32,28 @@ class Backend : public QObject
 public:
   explicit Backend(QObject* parent);
   void init();
-  short getExposedDistManagerState() const;
+  short getExposedDistUpdaterState() const;
   short getExposedServerState() const;
 
 signals:
-  void exposedDistManagerStateChanged();
+  void exposedDistUpdaterStateChanged();
   void exposedServerStateChanged();
 
 private:
-  void setExposedDistManagerState(short newState);
+  void setExposedDistUpdaterState(short newState);
   void setExposedServerState(short newState);
   QDir& getAppDataDir();
   void launchServer();
 
 private slots:
-  void distManagerStateChanged(DistManagerState newState);
+  void distUpdaterStateChanged(DistUpdaterState newState);
   void serverStarted();
   void serverCouldNotStart();
 
 private:
-  DistManager mDistManager;
+  DistUpdater mDistUpdater;
   HobrasoftHttpd::HttpServer* mServer;
-  short mExposedDistManagerState = 0;
+  short mExposedDistUpdaterState = 0;
   short mExposedServerState = 0;
 };
 

@@ -31,31 +31,31 @@ Window {
         }
 
         Item {
-            id: distManagerStateMessageContainer
+            id: distUpdaterStateMessageContainer
             width: parent.width
             height: messageContainerHeight
             Message {
-                visible: backend.distManagerState == 0
+                visible: backend.distUpdaterState == 0
                 indicator: loadingIndicator
                 textContent: "Downloading manifest file"
             }
             Message {
-                visible: backend.distManagerState == 1
+                visible: backend.distUpdaterState == 1
                 indicator: loadingIndicator
                 textContent: "Downloading Lisons!"
             }
             Message {
-                visible: backend.distManagerState == 2
+                visible: backend.distUpdaterState == 2
                 indicator: successIndicator
                 textContent: "Lisons! is up to date"
             }
             Message {
-                visible: backend.distManagerState == 3
+                visible: backend.distUpdaterState == 3
                 indicator: warningIndicator
                 textContent: "Could not update Lisons!"
             }
             Message {
-                visible: backend.distManagerState == 4
+                visible: backend.distUpdaterState == 4
                 indicator: failureIndicator
                 textContent: "Could not download Lisons!"
             }
