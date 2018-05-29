@@ -2,6 +2,10 @@
  * @file
  *
  * @author Petr Bravenec petr.bravenec@hobrasoft.cz
+ *
+ * @note Modifications by Piotr Grabowski <fau999@gmail.com>, 2018.05.29:
+ *       - Don't autostart the server
+ *       - Emit started() or couldNotStart() signal depending on the result of running start()
  */
 
 #include "httpserver.h"

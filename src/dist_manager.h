@@ -1,7 +1,7 @@
 #ifndef LISONS_LOCAL_DIST_MANAGER_H
 #define LISONS_LOCAL_DIST_MANAGER_H
 
-#include "dist_manifest.h"
+#include "dist.h"
 
 #include <QtCore>
 #include <QtNetwork>
@@ -27,7 +27,7 @@ signals:
 
 private:
   void enqueueDownload(const QString& fileName);
-  bool verifyDist(std::unique_ptr<DistManifest> const& manifest);
+  bool verifyDist(std::unique_ptr<Dist> const& manifest);
   void deleteNewDist();
   bool overwriteCurrDist();
   void fallBackToCurrDist();
@@ -43,8 +43,8 @@ private:
   QQueue<QUrl> mDownloadQueue;
   QNetworkReply* mCurrentDownload = nullptr;
   QFile mOutputFile;
-  std::unique_ptr<DistManifest> mCurrDistManifest;
-  std::unique_ptr<DistManifest> mNewDistManifest;
+  std::unique_ptr<Dist> mCurrDist;
+  std::unique_ptr<Dist> mNewDist;
 };
 
 #endif // LISONS_LOCAL_DIST_MANAGER_H

@@ -3,6 +3,9 @@
  *
  * @author Stefan Frings
  * @author Petr Bravenec petr.bravenec@hobrasoft.cz
+ *
+ * @note Modifications by Piotr Grabowski <fau999@gmail.com>, 2018.05.29:
+ *       - Add started() and couldNotStart() signals
  */
 
 #ifndef _HttpServer_H_
