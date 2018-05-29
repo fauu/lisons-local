@@ -20,7 +20,7 @@ class DistUpdater : public QObject
   Q_OBJECT
 public:
   DistUpdater(QObject* parent, const QDir& saveDir);
-  void updateDist();
+  void updateAndVerify();
 
 signals:
   void stateChanged(DistUpdaterState newState);

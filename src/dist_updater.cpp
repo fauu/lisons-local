@@ -18,7 +18,7 @@ DistUpdater::DistUpdater(QObject* parent, const QDir& saveDir)
 }
 
 void
-DistUpdater::updateDist()
+DistUpdater::updateAndVerify()
 {
   if (!mDistDir.exists()) {
     mDistDir.mkpath(".");
@@ -99,8 +99,8 @@ DistUpdater::downloadFinished()
       return;
     }
 
-    for (const Dist::FileEntry& entry : mNewDist->entries) {
-      enqueueDownload(entry.fileName);
+    for (const QString& entryFileName : mNewDist->entryFileNames()) {
+      enqueueDownload(entryFileName);
     }
     emit stateChanged(DistUpdaterState::DownloadingDistFiles);
   }
@@ -114,7 +114,7 @@ DistUpdater::downloadFinished()
   }
 
   qDebug() << "Download queue is now empty";
-  if (mNewDist->isValid() && mNewDist->changeSuffixOverwriting(mCurrDist->fileNameSuffix)) {
+  if (mNewDist->isValid() && mNewDist->changeSuffixOverwriting(mCurrDist->suffix())) {
     // We've successfully committed the downloaded version
     emit stateChanged(DistUpdaterState::UpToDateAndDistValid);
     return;
