@@ -4,8 +4,6 @@
 
 #include <QStandardPaths>
 
-// FIXME: We're needlessly redownloading the whole dist again
-
 static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
 static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 static const char* const NEW_FILE_SUFFIX = ".new";
@@ -151,8 +149,8 @@ DistManager::downloadFinished()
       return;
     }
 
-    if (mNewDistManifest == mCurrDistManifest && verifyDist(mCurrDistManifest)) {
-      // We're already running the latest version
+    if (*mNewDistManifest == *mCurrDistManifest && verifyDist(mCurrDistManifest)) {
+      // We already have the latest version
       emit stateChanged(DistManagerState::UpToDateAndDistValid);
       mOutputFile.remove();
       return;

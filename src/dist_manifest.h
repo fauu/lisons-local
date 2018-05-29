@@ -21,4 +21,7 @@ public:
   QVector<Entry> entries;
 };
 
+bool
+operator==(const DistManifest& lhs, const DistManifest& rhs);
+
 #endif // LISONS_LOCAL_DIST_MANIFEST_H

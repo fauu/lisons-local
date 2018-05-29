@@ -1,6 +1,8 @@
 #include "dist_manifest.h"
 #include "file_md5.h"
 
+#include <QDebug>
+
 static const char* const COLUMN_SEPARATOR = " ";
 
 std::unique_ptr<DistManifest>
