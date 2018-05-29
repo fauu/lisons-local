@@ -23,7 +23,6 @@ DistManager::updateDist()
   if (!mDistDir.exists()) {
     mDistDir.mkpath(".");
   }
-
   enqueueDownload(QLatin1String(MANIFEST_FILE_NAME));
   QTimer::singleShot(0, this, &DistManager::startNextDownload);
   emit stateChanged(DistManagerState::DownloadingDistManifest);
@@ -37,22 +36,19 @@ DistManager::enqueueDownload(const QString& fileName)
 }
 
 bool
-DistManager::verifyDist(std::unique_ptr<DistManifest> const& DistManifest)
+DistManager::verifyDist(std::unique_ptr<DistManifest> const& manifest)
 {
-  if (!DistManifest) {
+  if (!manifest) {
     return false;
   }
-
-  for (const DistManifest::Entry& entry : DistManifest->entries) {
-    QString entryFilePath =
-      mDistDir.absoluteFilePath(entry.fileName) + DistManifest->fileNameSuffix;
+  for (const DistManifest::Entry& entry : manifest->entries) {
+    QString entryFilePath = mDistDir.absoluteFilePath(entry.fileName) + manifest->fileNameSuffix;
     QFile entryFile(entryFilePath);
     QString checksum = fileMd5(entryFile).toHex();
     if (entry.md5 != checksum) {
       return false;
     }
   }
-
   return true;
 }
 

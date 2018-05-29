@@ -22,7 +22,7 @@ HttpServer::HttpServer(QObject *parent) : QObject(parent) {
 }
 
 
-HttpServer::HttpServer(const HttpSettings* settings, QObject *parent) : QObject(parent) {
+HttpServer::HttpServer(const HttpSettings *settings, QObject *parent) : QObject(parent) {
     m_server = NULL;
     m_settings = settings;
 }
@@ -42,7 +42,7 @@ void HttpServer::start() {
     if (m_server != NULL) {
         m_server->close();
         delete m_server;
-    }
+        }
     m_server = new HttpTcpServer(this);
     connect(m_server, SIGNAL(    newConnection()),
             this,       SLOT(slotNewConnection()));
@@ -56,13 +56,13 @@ void HttpServer::start() {
                     qPrintable(m_server->errorString())
                     );
         emit couldNotStart();
-    } else {
+      } else {
         qDebug("HttpServer listening on %s port %i",
                     qPrintable(address.toString()), 
                     port
                     );
         emit started();
-    }
+        }
 }
 
 

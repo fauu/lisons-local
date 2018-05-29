@@ -61,9 +61,10 @@ Backend::getAppDataDir()
 void
 Backend::launchServer()
 {
-  HobrasoftHttpd::HttpSettings serverSettings(this);
-  serverSettings.setDocroot(getAppDataDir().absolutePath());
-  mServer = new HobrasoftHttpd::HttpServer(&serverSettings, this);
+  auto* serverSettings = new HobrasoftHttpd::HttpSettings(this);
+  serverSettings->setDocroot(getAppDataDir().absolutePath());
+  serverSettings->setPort(8081);
+  mServer = new HobrasoftHttpd::HttpServer(serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);
   mServer->start();
