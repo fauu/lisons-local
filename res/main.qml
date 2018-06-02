@@ -26,7 +26,7 @@ Window {
 
         Logo {
             id: logo
-            anchors.horizontalCenter: parent.horizontalCenter
+            Layout.alignment: Qt.AlignHCenter
             Layout.bottomMargin: logoBottomMargin
         }
 
