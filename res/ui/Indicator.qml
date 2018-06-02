@@ -12,7 +12,7 @@ Rectangle {
     Image {
         id: image
         anchors.verticalCenter: parent.verticalCenter
-        source: "/res/icons/" + icon + ".png"
+        source: "/icons/" + icon + ".png"
         RotationAnimator on rotation {
             id: imageAnimation
             running: false

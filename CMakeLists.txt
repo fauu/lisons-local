@@ -18,7 +18,7 @@ file(GLOB SOURCES
     "lib/hobrasofthttp/*.cpp"
     "src/*.h"
     "src/*.cpp"
-    "qml.qrc"
+    "res/res.qrc"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
