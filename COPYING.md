@@ -25,4 +25,4 @@ File(s) | Author(s) | Licensing
 ----- | --------- | ---------
 ``res/fonts/*.ttf`` | Łukasz Dziedzic | OFL-1.1
 ``res/icons/*.png`` | Austin Andrews, Google | OFL-1.1, Apache License 2.0
-``lib/hobrasofthttp/*`` | | LGPLv3
+``lib/hobrasofthttp/*`` | Petr Bravenec, Stefan Frings | LGPLv3
