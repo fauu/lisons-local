@@ -1,14 +1,14 @@
 <RCC>
     <qresource prefix="/">
-        <file>res/main.qml</file>
-        <file>res/Style.js</file>
-        <file>res/Logo.qml</file>
-        <file>res/Indicator.qml</file>
-        <file>res/Message.qml</file>
-        <file>assets/fonts/Lato-Bold.ttf</file>
-        <file>assets/icons/check.png</file>
-        <file>assets/icons/close.png</file>
-        <file>assets/icons/exclamation.png</file>
-        <file>assets/icons/loading.png</file>
+        <file>res/ui/main.qml</file>
+        <file>res/ui/Style.js</file>
+        <file>res/ui/Logo.qml</file>
+        <file>res/ui/Indicator.qml</file>
+        <file>res/ui/Message.qml</file>
+        <file>res/fonts/Lato-Bold.ttf</file>
+        <file>res/icons/check.png</file>
+        <file>res/icons/close.png</file>
+        <file>res/icons/exclamation.png</file>
+        <file>res/icons/loading.png</file>
     </qresource>
 </RCC>

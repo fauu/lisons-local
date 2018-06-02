@@ -12,7 +12,7 @@ main(int argc, char* argv[])
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
   QGuiApplication app(argc, argv);
-  QFontDatabase::addApplicationFont(":/assets/fonts/Lato-Bold.ttf");
+  QFontDatabase::addApplicationFont(":/res/fonts/Lato-Bold.ttf");
 
   QQmlApplicationEngine engine;
 
@@ -20,7 +20,7 @@ main(int argc, char* argv[])
   backend.init();
   engine.rootContext()->setContextProperty("backend", &backend);
 
-  engine.load(QUrl(QStringLiteral("qrc:/res/main.qml")));
+  engine.load(QUrl(QStringLiteral("qrc:/res/ui/main.qml")));
   if (engine.rootObjects().isEmpty()) {
     return -1;
   }
