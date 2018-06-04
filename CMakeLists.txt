@@ -7,9 +7,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ";" ${QT5_PACKAGE_DIR})
+#set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ";" ${QT5_PACKAGE_DIR})
 
-find_package(Qt5 COMPONENTS Core Quick REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+#find_package(Qt5Core REQUIRED)
+#find_package(Qt5Widgets REQUIRED)
 
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
 
@@ -21,7 +23,12 @@ file(GLOB SOURCES
     "res/res.qrc"
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+set(FORMS
+    res/ui/main_window.ui
+)
+qt5_wrap_ui(FORM_H ${FORMS})
 
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Quick)
+add_executable(${PROJECT_NAME} ${SOURCES} ${FORM_H})
+
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network)
 

@@ -1,29 +1,39 @@
 #include "backend.h"
+#include "main_window.h"
 
+#include <QApplication>
 #include <QDebug>
-#include <QFontDatabase>
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#include <QtGui/QFontDatabase>
 
 int
 main(int argc, char* argv[])
 {
-  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  QApplication::setAttribute(Qt::AA_Use96Dpi);
 
-  QGuiApplication app(argc, argv);
+  QApplication app(argc, argv);
+
   QFontDatabase::addApplicationFont(":/fonts/Lato-Bold.ttf");
+  QFont mainFont("Lato", 16, QFont::Bold);
+  QApplication::setFont(mainFont);
 
-  QQmlApplicationEngine engine;
 
-  Backend backend(&app);
-  backend.init();
-  engine.rootContext()->setContextProperty("backend", &backend);
+  MainWindow window;
+  window.show();
 
-  engine.load(QUrl(QStringLiteral("qrc:///ui/main.qml")));
-  if (engine.rootObjects().isEmpty()) {
-    return -1;
-  }
+  return app.exec();
 
-  return QGuiApplication::exec();
+//  QGuiApplication app(argc, argv);
+//
+//  QQmlApplicationEngine engine;
+//
+//  Backend backend(&app);
+//  backend.init();
+//  engine.rootContext()->setContextProperty("backend", &backend);
+//
+//  engine.load(QUrl(QStringLiteral("qrc:///ui/main.qml")));
+//  if (engine.rootObjects().isEmpty()) {
+//    return -1;
+//  }
+//
+//  return QGuiApplication::exec();
 }
