@@ -8,10 +8,10 @@ class Dist
 public:
   static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, const QString& suffix);
   bool isValid();
-  bool changeSuffixOverwriting(const QString& newSuffix);
+  bool overwrite(const Dist& other);
   void remove();
-  QVector<QString> entryFileNames();
-  QString& suffix();
+  QVector<QString> entryFileNames() const;
+  const QString& suffix() const;
   QByteArray md5() const;
 
 private:

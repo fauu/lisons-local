@@ -17,6 +17,10 @@ Window {
             + logoBottomMargin
             + 2 * layoutSpacing
             + 2 * messageContainerHeight
+	minimumWidth: width
+	minimumHeight: height
+	maximumWidth: minimumWidth
+	maximumHeight: minimumHeight
     color: Style.colors.secondary
 
     ColumnLayout {

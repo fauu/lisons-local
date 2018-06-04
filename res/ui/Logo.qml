@@ -3,10 +3,18 @@ import QtGraphicalEffects 1.0
 import "Style.js" as Style
 
 Rectangle {
+	readonly property int widthOffset: {
+	  switch (Qt.platform.os) {
+	    case "windows": return 20
+		default: return 5
+   	  }
+	}
+	readonly property int heightOffset: -8
+
     id: logoRect
-    width: logoTextMetrics.width + 5
-    height: logoTextMetrics.height - 8
-    radius: Style.sizes.borderRadius
+    width: logoTextMetrics.width + widthOffset
+    height: logoTextMetrics.height + heightOffset
+    radius: 100
 
     LinearGradient {
         anchors.fill: parent

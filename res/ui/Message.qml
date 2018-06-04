@@ -14,6 +14,7 @@ Row {
         id: text
         anchors.verticalCenter: parent.verticalCenter
         textFormat: Text.RichText
+		font.pixelSize: 16
         font.family: Style.font
         font.weight: Font.Bold
         color: Style.colors.primary;

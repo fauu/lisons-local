@@ -38,12 +38,14 @@ DistUpdater::enqueueDownload(const QString& fileName)
 void
 DistUpdater::fallBackToCurrDist()
 {
-  if (mCurrDist->isValid()) {
+  if (mCurrDist && mCurrDist->isValid()) {
     emit stateChanged(DistUpdaterState::CouldNotUpdateButDistValid);
   } else {
     emit stateChanged(DistUpdaterState::DistInvalid);
   }
-  mNewDist->remove();
+  if (mNewDist) {
+	mNewDist->remove();
+  }
 }
 
 void
@@ -92,7 +94,7 @@ DistUpdater::downloadFinished()
       return;
     }
 
-    if (*mNewDist == *mCurrDist && mCurrDist->isValid()) {
+    if (mCurrDist && *mCurrDist == *mNewDist && mCurrDist->isValid()) {
       // We already have the latest version
       emit stateChanged(DistUpdaterState::UpToDateAndDistValid);
       mOutputFile.remove();
@@ -114,7 +116,7 @@ DistUpdater::downloadFinished()
   }
 
   qDebug() << "Download queue is now empty";
-  if (mNewDist->isValid() && mNewDist->changeSuffixOverwriting(mCurrDist->suffix())) {
+  if (mNewDist->isValid() && mNewDist->overwrite(*mCurrDist)) {
     // We've successfully committed the downloaded version
     emit stateChanged(DistUpdaterState::UpToDateAndDistValid);
     return;

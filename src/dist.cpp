@@ -17,7 +17,7 @@ std::unique_ptr<Dist>
 Dist::fromManifestFile(QFile& file, QDir& dir, const QString& suffix)
 {
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
-    return nullptr;
+    return std::make_unique<Dist>(Dist(dir, suffix, QByteArrayLiteral("\x00")));
   }
 
   file.seek(0);
@@ -35,12 +35,15 @@ Dist::fromManifestFile(QFile& file, QDir& dir, const QString& suffix)
     dist.mEntries.push_back({ fields[0], fields[1] });
   }
 
-  return dist.mEntries.empty() ? nullptr : std::make_unique<Dist>(dist);
+  return std::make_unique<Dist>(dist);
 }
 
 bool
 Dist::isValid()
 {
+  if (mMd5.size() == 1) {
+    return false; 
+  }
   for (const FileEntry& entry : mEntries) {
     QString entryFilePath = mDir.absoluteFilePath(entry.fileName) + mSuffix;
     QFile entryFile(entryFilePath);
@@ -52,23 +55,35 @@ Dist::isValid()
   return true;
 }
 
+
+// TODO: Rename to `overwrite`?
 bool
-Dist::changeSuffixOverwriting(const QString& newSuffix)
+Dist::overwrite(const Dist& other)
 {
-  // Add the new manifest itself as an entry so that we overwrite the old one with it as well
-  mEntries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
-  for (const FileEntry& entry : mEntries) {
-    QString entryFilePath = mDir.absoluteFilePath(entry.fileName) + newSuffix;
+  for (const QString& entryFileName : other.entryFileNames()) {
+    QString entryFilePath = mDir.absoluteFilePath(entryFileName) + other.suffix();
     if (QFile::exists(entryFilePath) && !QFile::remove(entryFilePath)) {
       qWarning() << "Could not remove" << entryFilePath;
       return false;
     }
-    if (!QFile::rename(entryFilePath, entryFilePath + newSuffix)) {
-      qWarning() << "Could not rename" << entryFilePath;
+  }
+  QString manifestFilePath = mDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)) + other.suffix();
+  if (QFile::exists(manifestFilePath) && !QFile::remove(manifestFilePath)) {
+    qWarning() << "Could not remove" << manifestFilePath;
+    return false;
+  }
+
+  // Add the new manifest itself as an entry so that we rename it inside the loop
+  mEntries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
+  for (const QString& entryFileName : entryFileNames()) {
+    QString entryFilePathNoSuffix = mDir.absoluteFilePath(entryFileName);
+    if (!QFile::rename(entryFilePathNoSuffix + mSuffix, entryFilePathNoSuffix + other.suffix())) {
+      qWarning() << "Could not rename" << entryFilePathNoSuffix + mSuffix;
       return false;
     }
   }
 
+  mSuffix = other.suffix();
   return true;
 }
 
@@ -90,7 +105,7 @@ Dist::remove()
 }
 
 QVector<QString>
-Dist::entryFileNames() {
+Dist::entryFileNames() const {
   QVector<QString> fileNames;
   for (const FileEntry& entry : mEntries) {
     fileNames.append(entry.fileName);
@@ -98,8 +113,8 @@ Dist::entryFileNames() {
   return fileNames;
 }
 
-QString&
-Dist::suffix() {
+const QString&
+Dist::suffix() const {
   return mSuffix;
 }
 

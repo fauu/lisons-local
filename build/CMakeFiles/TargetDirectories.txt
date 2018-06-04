@@ -1,0 +1,4 @@
+/home/nope/code/lisons-local/build/CMakeFiles/rebuild_cache.dir
+/home/nope/code/lisons-local/build/CMakeFiles/lisons-local.dir
+/home/nope/code/lisons-local/build/CMakeFiles/edit_cache.dir
+/home/nope/code/lisons-local/build/CMakeFiles/lisons-local_autogen.dir
