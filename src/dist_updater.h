@@ -30,6 +30,7 @@ signals:
 private:
   void enqueueDownload(const QString& fileName);
   void fallBackToCurrDist();
+  bool cleanDistDirPreserving(const Dist& distToPreserve);
 
 private slots:
   void startNextDownload();

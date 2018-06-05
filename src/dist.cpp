@@ -55,35 +55,23 @@ Dist::isValid()
   return true;
 }
 
-// TODO: Compress
 bool
-Dist::overwrite(const Dist& other)
+Dist::changeSuffix(const QString& newSuffix)
 {
-  for (const QString& entryFileName : other.entryFileNames()) {
-    QString entryFilePath = mDir.absoluteFilePath(entryFileName) + other.suffix();
-    if (QFile::exists(entryFilePath) && !QFile::remove(entryFilePath)) {
-      qWarning() << "Could not remove" << entryFilePath;
-      return false;
-    }
-  }
-  QString manifestFilePath =
-    mDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)) + other.suffix();
-  if (QFile::exists(manifestFilePath) && !QFile::remove(manifestFilePath)) {
-    qWarning() << "Could not remove" << manifestFilePath;
-    return false;
-  }
-
   // Add the new manifest itself as an entry so that we rename it inside the loop
   mEntries.push_back({ "", QLatin1String(MANIFEST_FILE_NAME) });
   for (const QString& entryFileName : entryFileNames()) {
     QString entryFilePathNoSuffix = mDir.absoluteFilePath(entryFileName);
-    if (!QFile::rename(entryFilePathNoSuffix + mSuffix, entryFilePathNoSuffix + other.suffix())) {
-      qWarning() << "Could not rename" << entryFilePathNoSuffix + mSuffix;
+    QString oldFilePath = entryFilePathNoSuffix + mSuffix;
+    QString newFilePath = entryFilePathNoSuffix + newSuffix;
+    if (!QFile::rename(oldFilePath, newFilePath)) {
+      qWarning() << "Could not rename" << oldFilePath << "to" << newFilePath;
       return false;
     }
+    qDebug() << "Renamed" << oldFilePath << "to" << newFilePath;
   }
 
-  mSuffix = other.suffix();
+  mSuffix = newSuffix;
   return true;
 }
 
@@ -94,7 +82,9 @@ Dist::remove()
   mDir.setFilter(QDir::Files);
   for (const QString& dirEntry : mDir.entryList()) {
     if (!mDir.remove(dirEntry)) {
-      qDebug() << "Could not remove" << dirEntry;
+      qDebug() << "Could not delete" << dirEntry;
+    } else {
+      qDebug() << "Deleted" << dirEntry; 
     }
   }
 }

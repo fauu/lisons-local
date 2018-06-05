@@ -49,6 +49,24 @@ DistUpdater::fallBackToCurrDist()
   }
 }
 
+bool
+DistUpdater::cleanDistDirPreserving(const Dist& distToPreserve)
+{
+  mDistDir.setNameFilters(QStringList() << QString("*.*"));
+  mDistDir.setFilter(QDir::Files);
+  for (const QString& dirEntry : mDistDir.entryList()) {
+    if (dirEntry.endsWith(distToPreserve.suffix())) {
+      continue; 
+    }
+    if (!mDistDir.remove(dirEntry)) {
+      qDebug() << "Could not delete" << dirEntry;
+      return false;
+    }
+    qDebug() << "Deleted" << dirEntry; 
+  }
+  return true;
+}
+
 void
 DistUpdater::startNextDownload()
 {
@@ -87,7 +105,6 @@ DistUpdater::downloadFinished()
   if (!mNewDist) {
     // Assumption: if we don't have the new Dist yet then the file is the new Dist manifest
     mNewDist = Dist::fromManifestFile(mOutputFile, mDistDir, QLatin1String(NEW_FILE_SUFFIX));
-
     if (!mNewDist) {
       // Can't read the downloaded manifest file
       fallBackToCurrDist();
@@ -108,7 +125,7 @@ DistUpdater::downloadFinished()
     emit stateChanged(DistUpdaterState::DownloadingDistFiles);
   }
 
-  qDebug() << "Downloaded:" << QFileInfo(mOutputFile).absoluteFilePath();
+  qDebug() << "Saved" << QFileInfo(mOutputFile).absoluteFilePath();
   mOutputFile.close();
 
   if (!mDownloadQueue.isEmpty()) {
@@ -117,7 +134,9 @@ DistUpdater::downloadFinished()
   }
 
   qDebug() << "Download queue is now empty";
-  if (mNewDist->isValid() && mNewDist->overwrite(*mCurrDist)) {
+  if (mNewDist->isValid()
+      && cleanDistDirPreserving(*mNewDist)
+      && mNewDist->changeSuffix(mCurrDist->suffix())) {
     // We've successfully committed the downloaded version
     emit stateChanged(DistUpdaterState::UpToDateAndDistValid);
     return;
