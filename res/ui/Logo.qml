@@ -46,7 +46,6 @@ Rectangle {
         id: logoText
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
-        anchors.horizontalCenterOffset: -1
         font: logoTextMetrics.font
         text: logoTextMetrics.text
         color: Style.colors.secondary

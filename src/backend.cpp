@@ -7,39 +7,43 @@
 #include <QDebug>
 #include <QtCore>
 
+namespace Lisons {
+
 // TODO: Make configurable through program argument
 static const short SERVER_PORT = 8080;
 
 Backend::Backend(QObject* parent)
   : QObject(parent)
-  , mDistUpdater(this, getAppDataDir())
+  , mAppDataDir(QDir(
+      QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation)))
+  , mDistUpdater(this, mAppDataDir)
 {}
 
 void
 Backend::init()
 {
-  qDebug() << "SSL Library build version: " << QSslSocket::sslLibraryBuildVersionString();
-  qDebug() << "SSL Library runtime version: " << QSslSocket::sslLibraryVersionString();
-  qDebug() << "AppData directory: " << getAppDataDir().absolutePath();
+  qDebug() << "SSL Library build version:" << QSslSocket::sslLibraryBuildVersionString();
+  qDebug() << "SSL Library runtime version:" << QSslSocket::sslLibraryVersionString();
+  qDebug() << "AppData directory:" << mAppDataDir.absolutePath();
 
   connect(&mDistUpdater, &DistUpdater::stateChanged, this, &Backend::distUpdaterStateChanged);
   mDistUpdater.updateAndVerify();
 }
 
 short
-Backend::getExposedDistUpdaterState() const
+Backend::exposedDistUpdaterState() const
 {
   return mExposedDistUpdaterState;
 }
 
 QString
-Backend::getExposedServerAddress() const
+Backend::exposedServerAddress() const
 {
   return mExposedServerAddress;
 }
 
 short
-Backend::getExposedServerState() const
+Backend::exposedServerState() const
 {
   return mExposedServerState;
 }
@@ -62,14 +66,6 @@ Backend::setExposedServerState(short newState)
   }
 }
 
-QDir&
-Backend::getAppDataDir()
-{
-  static QDir appDataDir(
-    QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation));
-  return appDataDir;
-}
-
 void
 Backend::launchServer()
 {
@@ -77,8 +73,9 @@ Backend::launchServer()
   emit exposedServerAddressChanged();
 
   auto* serverSettings = new HobrasoftHttpd::HttpSettings(this);
-  serverSettings->setDocroot(getAppDataDir().absolutePath());
+  serverSettings->setDocroot(mAppDataDir.absolutePath());
   serverSettings->setPort(SERVER_PORT);
+
   mServer = new HobrasoftHttpd::HttpServer(serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);
@@ -108,4 +105,5 @@ void
 Backend::serverCouldNotStart()
 {
   setExposedServerState(ServerState::CouldNotStart);
+}
 }

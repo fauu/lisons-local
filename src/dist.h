@@ -3,10 +3,14 @@
 
 #include <QtCore>
 
+namespace Lisons {
+
+static const char* const MANIFEST_FILE_NAME = "manifest.txt";
+
 class Dist
 {
 public:
-  static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, const QString suffix);
+  static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, QString suffix);
   bool isValid();
   bool overwrite(const Dist& other);
   void remove();
@@ -33,5 +37,6 @@ private:
 
 bool
 operator==(const Dist& lhs, const Dist& rhs);
+}
 
 #endif // LISONS_LOCAL_DIST_H

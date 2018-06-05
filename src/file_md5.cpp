@@ -3,7 +3,8 @@
 #include <QCryptographicHash>
 #include <QtCore>
 
-// TODO: Use a namespace?
+namespace Lisons {
+
 QByteArray
 fileMd5(QFile& file)
 {
@@ -14,4 +15,5 @@ fileMd5(QFile& file)
     }
   }
   return QByteArray();
+}
 }

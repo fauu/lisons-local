@@ -8,6 +8,8 @@
 #include <QHostAddress>
 #include <QtCore>
 
+namespace Lisons {
+
 enum ServerState
 {
   Initial,
@@ -20,24 +22,27 @@ class Backend : public QObject
   Q_OBJECT
   // clang-format off
   Q_PROPERTY(short distUpdaterState
-             READ getExposedDistUpdaterState
-             WRITE setExposedDistUpdaterState
-             NOTIFY exposedDistUpdaterStateChanged)
+                 READ exposedDistUpdaterState
+                 WRITE setExposedDistUpdaterState
+                 NOTIFY
+                 exposedDistUpdaterStateChanged)
   Q_PROPERTY(QString serverAddress
-             READ getExposedServerAddress
-             NOTIFY exposedServerAddressChanged)
+                 READ exposedServerAddress
+                 NOTIFY
+                 exposedServerAddressChanged)
   Q_PROPERTY(short serverState
-             READ getExposedServerState
-             WRITE setExposedServerState
-             NOTIFY exposedServerStateChanged)
+                 READ exposedServerState
+                 WRITE setExposedServerState
+                 NOTIFY
+                 exposedServerStateChanged)
   // clang-format on
 
 public:
   explicit Backend(QObject* parent);
   void init();
-  short getExposedDistUpdaterState() const;
-  QString getExposedServerAddress() const;
-  short getExposedServerState() const;
+  short exposedDistUpdaterState() const;
+  QString exposedServerAddress() const;
+  short exposedServerState() const;
 
 signals:
   void exposedDistUpdaterStateChanged();
@@ -47,7 +52,6 @@ signals:
 private:
   void setExposedDistUpdaterState(short newState);
   void setExposedServerState(short newState);
-  QDir& getAppDataDir();
   void launchServer();
 
 private slots:
@@ -56,11 +60,13 @@ private slots:
   void serverCouldNotStart();
 
 private:
+  QDir mAppDataDir;
   DistUpdater mDistUpdater;
   HobrasoftHttpd::HttpServer* mServer;
   short mExposedDistUpdaterState = 0;
   QString mExposedServerAddress;
   short mExposedServerState = ServerState::Initial;
 };
+}
 
 #endif // LISONS_LOCAL_BACKEND_H

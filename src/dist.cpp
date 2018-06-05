@@ -3,9 +3,9 @@
 
 #include <QDebug>
 
+namespace Lisons {
+
 static const char* const COLUMN_SEPARATOR = " ";
-// TODO: DRY dist_manager.cpp
-static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 
 Dist::Dist(QDir& dir, const QString suffix, const QByteArray md5)
   : mDir(dir)
@@ -42,7 +42,7 @@ bool
 Dist::isValid()
 {
   if (mMd5.size() == 1) {
-    return false; 
+    return false;
   }
   for (const FileEntry& entry : mEntries) {
     QString entryFilePath = mDir.absoluteFilePath(entry.fileName) + mSuffix;
@@ -55,8 +55,7 @@ Dist::isValid()
   return true;
 }
 
-
-// TODO: Rename to `overwrite`?
+// TODO: Compress
 bool
 Dist::overwrite(const Dist& other)
 {
@@ -67,7 +66,8 @@ Dist::overwrite(const Dist& other)
       return false;
     }
   }
-  QString manifestFilePath = mDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)) + other.suffix();
+  QString manifestFilePath =
+    mDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME)) + other.suffix();
   if (QFile::exists(manifestFilePath) && !QFile::remove(manifestFilePath)) {
     qWarning() << "Could not remove" << manifestFilePath;
     return false;
@@ -87,7 +87,6 @@ Dist::overwrite(const Dist& other)
   return true;
 }
 
-
 void
 Dist::remove()
 {
@@ -105,7 +104,8 @@ Dist::remove()
 }
 
 QVector<QString>
-Dist::entryFileNames() const {
+Dist::entryFileNames() const
+{
   QVector<QString> fileNames;
   for (const FileEntry& entry : mEntries) {
     fileNames.append(entry.fileName);
@@ -114,17 +114,20 @@ Dist::entryFileNames() const {
 }
 
 const QString&
-Dist::suffix() const {
+Dist::suffix() const
+{
   return mSuffix;
 }
 
 QByteArray
-Dist::md5() const {
+Dist::md5() const
+{
   return mMd5;
 }
 
 bool
 operator==(const Dist& lhs, const Dist& rhs)
 {
-  return lhs.md5().size() > 0 && rhs.md5().size() > 0 && lhs.md5() == rhs.md5();
+  return lhs.md5() == rhs.md5();
+}
 }

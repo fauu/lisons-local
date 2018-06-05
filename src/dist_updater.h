@@ -6,6 +6,8 @@
 #include <QtCore>
 #include <QtNetwork>
 
+namespace Lisons {
+
 enum DistUpdaterState
 {
   DownloadingDistManifest,
@@ -43,5 +45,6 @@ private:
   std::unique_ptr<Dist> mCurrDist;
   std::unique_ptr<Dist> mNewDist;
 };
+}
 
 #endif // LISONS_LOCAL_DIST_UPDATER_H

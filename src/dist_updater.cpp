@@ -4,8 +4,9 @@
 
 #include <QStandardPaths>
 
+namespace Lisons {
+
 static const char* const BASE_URL = "https://raw.githubusercontent.com/fauu/lisons/pwa/web/";
-static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 static const char* const NEW_FILE_SUFFIX = ".new";
 
 DistUpdater::DistUpdater(QObject* parent, const QDir& saveDir)
@@ -44,7 +45,7 @@ DistUpdater::fallBackToCurrDist()
     emit stateChanged(DistUpdaterState::DistInvalid);
   }
   if (mNewDist) {
-	mNewDist->remove();
+    mNewDist->remove();
   }
 }
 
@@ -129,4 +130,5 @@ void
 DistUpdater::downloadReadyRead()
 {
   mOutputFile.write(mCurrentDownload->readAll());
+}
 }
