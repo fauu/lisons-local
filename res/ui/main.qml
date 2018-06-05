@@ -72,8 +72,12 @@ Window {
             Message {
                 visible: backend.serverState == 1
                 indicator: successIndicator
-                textContent: "<style>a:link { color: " + Style.colors.accent + "; }</style>
-                    Server is running at <a href='http://localhost:8080'>http://localhost:8080</a>"
+                textContent: "
+                    <style>a:link { color: " + Style.colors.accent + "; }</style>
+                    Server is running at
+                    <a href='http://localhost:" + backend.serverPort + "'>
+                        http://localhost:" + backend.serverPort + "
+                    </a>"
             }
             Message {
                 visible: backend.serverState == 2

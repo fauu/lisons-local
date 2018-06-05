@@ -15,7 +15,10 @@ Backend::Backend(QObject* parent)
 void
 Backend::init()
 {
-  qDebug() << "appDataDir =" << getAppDataDir().absolutePath();
+  qDebug() << "SSL Library build version: " << QSslSocket::sslLibraryBuildVersionString();
+  qDebug() << "SSL Library runtime version: " << QSslSocket::sslLibraryVersionString();
+  qDebug() << "AppData directory: " << getAppDataDir().absolutePath();
+
   connect(&mDistUpdater, &DistUpdater::stateChanged, this, &Backend::distUpdaterStateChanged);
   mDistUpdater.updateAndVerify();
 }
@@ -24,6 +27,12 @@ short
 Backend::getExposedDistUpdaterState() const
 {
   return mExposedDistUpdaterState;
+}
+
+short
+Backend::getServerPort() const
+{
+  return mServerPort;
 }
 
 short
@@ -61,9 +70,13 @@ Backend::getAppDataDir()
 void
 Backend::launchServer()
 {
+  // TODO: Make port configurable through a program argument
+  mServerPort = 8080;
+  emit serverPortChanged();
+
   auto* serverSettings = new HobrasoftHttpd::HttpSettings(this);
   serverSettings->setDocroot(getAppDataDir().absolutePath());
-  serverSettings->setPort(8081);
+  serverSettings->setPort(mServerPort);
   mServer = new HobrasoftHttpd::HttpServer(serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);

@@ -7,14 +7,14 @@ static const char* const COLUMN_SEPARATOR = " ";
 // TODO: DRY dist_manager.cpp
 static const char* const MANIFEST_FILE_NAME = "manifest.txt";
 
-Dist::Dist(QDir& dir, const QString& suffix, QByteArray& md5)
+Dist::Dist(QDir& dir, const QString suffix, const QByteArray md5)
   : mDir(dir)
   , mSuffix(suffix)
   , mMd5(md5)
 {}
 
 std::unique_ptr<Dist>
-Dist::fromManifestFile(QFile& file, QDir& dir, const QString& suffix)
+Dist::fromManifestFile(QFile& file, QDir& dir, const QString suffix)
 {
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
     return std::make_unique<Dist>(Dist(dir, suffix, QByteArrayLiteral("\x00")));

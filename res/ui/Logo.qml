@@ -5,8 +5,8 @@ import "Style.js" as Style
 Rectangle {
 	readonly property int widthOffset: {
 	  switch (Qt.platform.os) {
-	    case "windows": return 20
-		default: return 5
+	    case "windows": return 20;
+		default: return 5;
    	  }
 	}
 	readonly property int heightOffset: -8
@@ -14,7 +14,7 @@ Rectangle {
     id: logoRect
     width: logoTextMetrics.width + widthOffset
     height: logoTextMetrics.height + heightOffset
-    radius: 100
+    radius: Style.sizes.borderRadius
 
     LinearGradient {
         anchors.fill: parent

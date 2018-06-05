@@ -15,11 +15,6 @@ main(int argc, char* argv[])
   QFontDatabase::addApplicationFont(":/fonts/Lato-Bold.ttf");
 
   QQmlApplicationEngine engine;
-
-  qDebug() << "SslSupport: " << QSslSocket::supportsSsl();
-  qDebug() << "SslLibraryBuildVersion: " << QSslSocket::sslLibraryBuildVersionString();
-  qDebug() << "SslLibraryRuntimeVersion: " << QSslSocket::sslLibraryVersionString();
-
   Backend backend(&app);
   backend.init();
   engine.rootContext()->setContextProperty("backend", &backend);

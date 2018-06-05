@@ -6,7 +6,7 @@
 class Dist
 {
 public:
-  static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, const QString& suffix);
+  static std::unique_ptr<Dist> fromManifestFile(QFile& file, QDir& dir, const QString suffix);
   bool isValid();
   bool overwrite(const Dist& other);
   void remove();
@@ -22,12 +22,12 @@ private:
   };
 
 private:
-  Dist(QDir& dir, const QString& suffix, QByteArray& md5);
+  Dist(QDir& dir, QString suffix, QByteArray md5);
 
 private:
   QDir& mDir;
   QString mSuffix;
-  QByteArray mMd5;
+  const QByteArray mMd5;
   QVector<FileEntry> mEntries;
 };
 

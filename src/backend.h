@@ -23,6 +23,9 @@ class Backend : public QObject
              READ getExposedDistUpdaterState
              WRITE setExposedDistUpdaterState
              NOTIFY exposedDistUpdaterStateChanged)
+  Q_PROPERTY(short serverPort
+                 READ getServerPort
+                 NOTIFY serverPortChanged)
   Q_PROPERTY(short serverState
              READ getExposedServerState
              WRITE setExposedServerState
@@ -33,10 +36,12 @@ public:
   explicit Backend(QObject* parent);
   void init();
   short getExposedDistUpdaterState() const;
+  short getServerPort() const;
   short getExposedServerState() const;
 
 signals:
   void exposedDistUpdaterStateChanged();
+  void serverPortChanged();
   void exposedServerStateChanged();
 
 private:
@@ -53,6 +58,7 @@ private slots:
 private:
   DistUpdater mDistUpdater;
   HobrasoftHttpd::HttpServer* mServer;
+  short mServerPort = -1;
   short mExposedDistUpdaterState = 0;
   short mExposedServerState = 0;
 };
