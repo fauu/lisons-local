@@ -75,8 +75,8 @@ Window {
                 textContent: "
                     <style>a:link { color: " + Style.colors.accent + "; }</style>
                     Server is running at
-                    <a href='http://localhost:" + backend.serverPort + "'>
-                        http://localhost:" + backend.serverPort + "
+                    <a href='" + backend.serverAddress + "'>
+                        " + backend.serverAddress + "
                     </a>"
             }
             Message {

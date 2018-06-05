@@ -7,6 +7,9 @@
 #include <QDebug>
 #include <QtCore>
 
+// TODO: Make configurable through program argument
+static const short SERVER_PORT = 8080;
+
 Backend::Backend(QObject* parent)
   : QObject(parent)
   , mDistUpdater(this, getAppDataDir())
@@ -29,10 +32,10 @@ Backend::getExposedDistUpdaterState() const
   return mExposedDistUpdaterState;
 }
 
-short
-Backend::getServerPort() const
+QString
+Backend::getExposedServerAddress() const
 {
-  return mServerPort;
+  return mExposedServerAddress;
 }
 
 short
@@ -70,13 +73,12 @@ Backend::getAppDataDir()
 void
 Backend::launchServer()
 {
-  // TODO: Make port configurable through a program argument
-  mServerPort = 8080;
-  emit serverPortChanged();
+  mExposedServerAddress = QStringLiteral("http://localhost:%1").arg(SERVER_PORT);
+  emit exposedServerAddressChanged();
 
   auto* serverSettings = new HobrasoftHttpd::HttpSettings(this);
   serverSettings->setDocroot(getAppDataDir().absolutePath());
-  serverSettings->setPort(mServerPort);
+  serverSettings->setPort(SERVER_PORT);
   mServer = new HobrasoftHttpd::HttpServer(serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);
   connect(mServer, &HobrasoftHttpd::HttpServer::couldNotStart, this, &Backend::serverCouldNotStart);

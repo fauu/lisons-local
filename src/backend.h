@@ -23,9 +23,9 @@ class Backend : public QObject
              READ getExposedDistUpdaterState
              WRITE setExposedDistUpdaterState
              NOTIFY exposedDistUpdaterStateChanged)
-  Q_PROPERTY(short serverPort
-                 READ getServerPort
-                 NOTIFY serverPortChanged)
+  Q_PROPERTY(QString serverAddress
+             READ getExposedServerAddress
+             NOTIFY exposedServerAddressChanged)
   Q_PROPERTY(short serverState
              READ getExposedServerState
              WRITE setExposedServerState
@@ -36,12 +36,12 @@ public:
   explicit Backend(QObject* parent);
   void init();
   short getExposedDistUpdaterState() const;
-  short getServerPort() const;
+  QString getExposedServerAddress() const;
   short getExposedServerState() const;
 
 signals:
   void exposedDistUpdaterStateChanged();
-  void serverPortChanged();
+  void exposedServerAddressChanged();
   void exposedServerStateChanged();
 
 private:
@@ -58,9 +58,9 @@ private slots:
 private:
   DistUpdater mDistUpdater;
   HobrasoftHttpd::HttpServer* mServer;
-  short mServerPort = -1;
   short mExposedDistUpdaterState = 0;
-  short mExposedServerState = 0;
+  QString mExposedServerAddress;
+  short mExposedServerState = ServerState::Initial;
 };
 
 #endif // LISONS_LOCAL_BACKEND_H
