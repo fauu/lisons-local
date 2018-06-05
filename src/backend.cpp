@@ -6,6 +6,7 @@
 
 #include <QDebug>
 #include <QtCore>
+#include <QtGui/QDesktopServices>
 
 namespace Lisons {
 
@@ -99,6 +100,7 @@ void
 Backend::serverStarted()
 {
   setExposedServerState(ServerState::Started);
+  QDesktopServices::openUrl(QUrl(mExposedServerAddress));
 }
 
 void

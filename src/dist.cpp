@@ -90,7 +90,7 @@ Dist::overwrite(const Dist& other)
 void
 Dist::remove()
 {
-  mDir.setNameFilters(QStringList() << QString("*.%1").arg(mSuffix.isEmpty ? "*" : mSuffix));
+  mDir.setNameFilters(QStringList() << QString("*.%1").arg(mSuffix.isEmpty() ? "*" : mSuffix));
   mDir.setFilter(QDir::Files);
   for (const QString& dirEntry : mDir.entryList()) {
     if (!mDir.remove(dirEntry)) {
