@@ -41,7 +41,7 @@ Dist::fromManifestFile(QFile& file, QDir& dir, const QString suffix)
 bool
 Dist::isValid()
 {
-  if (mMd5.size() == 1) {
+  if (mMd5.size() == 1 && mMd5[0] == '\x00') {
     return false;
   }
   for (const FileEntry& entry : mEntries) {
@@ -90,11 +90,7 @@ Dist::overwrite(const Dist& other)
 void
 Dist::remove()
 {
-  if (mSuffix.isEmpty()) {
-    mDir.setNameFilters(QStringList() << "*.*");
-  } else {
-    mDir.setNameFilters(QStringList() << "*" + mSuffix);
-  }
+  mDir.setNameFilters(QStringList() << QString("*.%1").arg(mSuffix.isEmpty ? "*" : mSuffix));
   mDir.setFilter(QDir::Files);
   for (const QString& dirEntry : mDir.entryList()) {
     if (!mDir.remove(dirEntry)) {

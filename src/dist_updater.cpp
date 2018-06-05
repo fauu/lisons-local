@@ -15,7 +15,7 @@ DistUpdater::DistUpdater(QObject* parent, const QDir& saveDir)
 {
   QString distManifestPath = mDistDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
   QFile distManifestFile(distManifestPath);
-  mCurrDist = Dist::fromManifestFile(distManifestFile, mDistDir, QLatin1String(""));
+  mCurrDist = Dist::fromManifestFile(distManifestFile, mDistDir, QString());
 }
 
 void
