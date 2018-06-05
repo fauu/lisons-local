@@ -8,13 +8,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#if(MSVC)
-#	set(CMAKE_PREFIX_PATH "C:\\Qt\\5.11.0\\msvc2017_64")
-#endif()
-
 find_package(Qt5 COMPONENTS Core Quick REQUIRED)
-
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
 
 file(GLOB SOURCES
     "lib/hobrasofthttp/*.h"
