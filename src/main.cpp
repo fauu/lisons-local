@@ -15,7 +15,7 @@ main(int argc, char* argv[])
   QFontDatabase::addApplicationFont(":/fonts/Lato-Bold.ttf");
 
   QQmlApplicationEngine engine;
-  Lisons::Backend backend(&app);
+  Lisons::Backend backend{ &app };
   backend.init();
   engine.rootContext()->setContextProperty("backend", &backend);
 

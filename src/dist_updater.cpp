@@ -14,7 +14,7 @@ DistUpdater::DistUpdater(QObject* parent, const QDir& saveDir)
   , mDistDir(saveDir)
 {
   QString distManifestPath = mDistDir.absoluteFilePath(QLatin1String(MANIFEST_FILE_NAME));
-  QFile distManifestFile(distManifestPath);
+  QFile distManifestFile{ distManifestPath };
   mCurrDist = Dist::fromManifestFile(distManifestFile, mDistDir, QString());
 }
 
@@ -39,11 +39,9 @@ DistUpdater::enqueueDownload(const QString& fileName)
 void
 DistUpdater::fallBackToCurrDist()
 {
-  if (mCurrDist && mCurrDist->isValid()) {
-    emit stateChanged(DistUpdaterState::CouldNotUpdateButDistValid);
-  } else {
-    emit stateChanged(DistUpdaterState::DistInvalid);
-  }
+  bool currDistValid = mCurrDist && mCurrDist->isValid();
+  using Lisons::DistUpdaterState;
+  emit stateChanged(currDistValid ? CouldNotUpdateButDistValid : DistInvalid);
   if (mNewDist) {
     mNewDist->remove();
   }

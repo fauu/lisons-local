@@ -17,12 +17,12 @@ std::unique_ptr<Dist>
 Dist::fromManifestFile(QFile& file, QDir& dir, const QString suffix)
 {
   if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
-    return std::make_unique<Dist>(Dist(dir, suffix, QByteArrayLiteral("\x00")));
+    return std::make_unique<Dist>(Dist{ dir, suffix, QByteArrayLiteral("\x00") });
   }
 
   file.seek(0);
   QByteArray md5 = fileMd5(file);
-  Dist dist(dir, suffix, md5);
+  Dist dist{ dir, suffix, md5 };
 
   file.seek(0);
   QTextStream in(&file);
@@ -84,7 +84,7 @@ Dist::remove()
     if (!mDir.remove(dirEntry)) {
       qDebug() << "Could not delete" << dirEntry;
     } else {
-      qDebug() << "Deleted" << dirEntry; 
+      qDebug() << "Deleted" << dirEntry;
     }
   }
 }
