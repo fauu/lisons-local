@@ -18,6 +18,10 @@ file(GLOB SOURCES
     "res/res.qrc"
 )
 
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DQT_NO_DEBUG_OUTPUT)
+endif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Quick)
