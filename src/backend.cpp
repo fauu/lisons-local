@@ -10,11 +10,9 @@
 
 namespace Lisons {
 
-// TODO: Make configurable through program argument
-static const short SERVER_PORT = 8080;
-
-Backend::Backend(QObject* parent)
+Backend::Backend(QObject* parent, short serverPort)
   : QObject(parent)
+  , mServerPort(serverPort)
   , mAppDataDir(QDir(
       QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppLocalDataLocation)))
   , mDistUpdater(this, mAppDataDir)
@@ -70,12 +68,12 @@ Backend::setExposedServerState(short newState)
 void
 Backend::launchServer()
 {
-  mExposedServerAddress = QStringLiteral("http://localhost:%1").arg(SERVER_PORT);
+  mExposedServerAddress = QStringLiteral("http://localhost:%1").arg(mServerPort);
   emit exposedServerAddressChanged();
 
   auto* serverSettings = new HobrasoftHttpd::HttpSettings(this);
   serverSettings->setDocroot(mAppDataDir.absolutePath());
-  serverSettings->setPort(SERVER_PORT);
+  serverSettings->setPort(mServerPort);
 
   mServer = new HobrasoftHttpd::HttpServer(serverSettings, this);
   connect(mServer, &HobrasoftHttpd::HttpServer::started, this, &Backend::serverStarted);

@@ -38,7 +38,7 @@ class Backend : public QObject
   // clang-format on
 
 public:
-  explicit Backend(QObject* parent);
+  explicit Backend(QObject* parent, short serverPort = 8080);
   void init();
   short exposedDistUpdaterState() const;
   QString exposedServerAddress() const;
@@ -63,6 +63,7 @@ private:
   QDir mAppDataDir;
   DistUpdater mDistUpdater;
   HobrasoftHttpd::HttpServer* mServer;
+  short mServerPort;
   short mExposedDistUpdaterState = 0;
   QString mExposedServerAddress;
   short mExposedServerState = ServerState::Initial;

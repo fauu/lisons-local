@@ -9,13 +9,21 @@
 int
 main(int argc, char* argv[])
 {
-  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
   QGuiApplication app(argc, argv);
+  QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  QGuiApplication::setApplicationVersion("0.1");
+
+  QCommandLineParser cliParser;
+  cliParser.setApplicationDescription("Local server launcher for Lisons!");
+  cliParser.addHelpOption();
+  cliParser.addVersionOption();
+  cliParser.addOption({ { "port", "p" }, "Sets server port.", "port", "8080" });
+  cliParser.process(app);
+
   QFontDatabase::addApplicationFont(":/fonts/Lato-Bold.ttf");
 
   QQmlApplicationEngine engine;
-  Lisons::Backend backend{ &app };
+  Lisons::Backend backend{ &app, cliParser.value("port").toShort() };
   backend.init();
   engine.rootContext()->setContextProperty("backend", &backend);
 
